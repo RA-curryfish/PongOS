@@ -28,7 +28,7 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
 {
-	return (uint16_t) uc | (uint16_t) color << 8;
+	return (uint16_t) uc  | (uint16_t) color << 8;
 }
 
 static const size_t VGA_WIDTH = 80;
@@ -54,7 +54,7 @@ void terminal_initialize(void)
 {
 	terminal_row = 0;
 	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_CYAN, VGA_COLOR_BLACK);
+	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) 0xB8000;
 	clear_terminal();
 }
@@ -91,8 +91,8 @@ void terminal_putchar(char c)
 					terminal_row = 0;
 			}
 	}
-//	if (terminal_row == 0 && terminal_column == 0)
-//		clear_terminal(); // todo: scroll instead of clear screen
+	if (terminal_row == 0 && terminal_column == 0)
+		clear_terminal(); // todo: scroll instead of clear screen
 }
 
 void printchar(char data) 
@@ -119,4 +119,5 @@ void backspace()
 	else {
 		--terminal_column;
 	}
+	terminal_putcharat(' ',terminal_color,terminal_column,terminal_row);
 }
