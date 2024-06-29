@@ -25,11 +25,12 @@ size_t strlen(const char *s)
 
 void memcpy(void *dest, void *source, size_t len)
 {
+	// todo: need to handle \0
 	char *d = (char*)dest;
 	char *s = (char*)source;
 	while(len)
 	{
-		*(d+len) = *(s+len);
+		*(d+len-1) = *(s+len-1);
 		len--;
 	}
 }

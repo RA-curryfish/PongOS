@@ -46,6 +46,10 @@ void kernel_main(void)
 {
 	/* Initialize terminal interface */
 	terminal_initialize();
+
+	// for (int8_t i = 0; i<VGA_HEIGHT-1;i++)
+	// 	for(int8_t j = 0; j<VGA_WIDTH;j++)
+	// 		printchar('a'+(i-'0'));
 	printstr("**********************************************\n");
 	printstr("\t\tPong OS\n");
 	printstr("**********************************************\n");
