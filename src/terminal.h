@@ -78,6 +78,7 @@ void clear_line(size_t row)
 	for (size_t x = 0; x < VGA_WIDTH; x++) {
 		terminal_buffer[(row*VGA_WIDTH)+x] = vga_entry(' ', terminal_color);
 	}
+	terminal_row--;
 }
 
 void clear_terminal()
@@ -89,6 +90,7 @@ void clear_terminal()
 		// 	terminal_buffer[index] = vga_entry(' ', terminal_color);
 		// }
 	}
+	terminal_row = terminal_column = 0;
 }
 
 void terminal_initialize(void) 
@@ -97,7 +99,6 @@ void terminal_initialize(void)
 	terminal_column = 0;
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) VGA_MEM_BASE;
-	clear_terminal();
 	for (size_t y = 0; y < VGA_HEIGHT; y++) terminal_line_ptrs[y] = (uint16_t*)(sizeof(uint16_t)*y*VGA_WIDTH+VGA_MEM_BASE);
 }
 
@@ -140,9 +141,9 @@ void terminal_putchar(char c)
 					terminal_row = 0;
 			}
 	}
-	update_cursor(terminal_column, terminal_row);
 	if (terminal_row == 0 && terminal_column == 0)
 		scroll_terminal();
+	update_cursor(terminal_column, terminal_row);
 }
 
 void printchar(char data) 
