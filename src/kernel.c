@@ -63,7 +63,7 @@ void splash_screen()
 	inb(data_port);
 	toggle_cmd_offset();
 	clear_terminal();
-	emit_cmd_label();
+	emit_label(cmd_label,cmd_label_color);
 	enable_cursor(0,15);
 }
 

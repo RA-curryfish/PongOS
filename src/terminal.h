@@ -4,20 +4,27 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
-// void terminal_putchar(char c);
+void terminal_putchar(char c);
 // void printchar(char c);
+
+typedef struct terminal_element {
+	unsigned char c; // first 8 bits
+	unsigned char color; // last 8 bits
+} ter_el;
 
 size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_text_color;
 uint8_t cmd_label_color;
+uint8_t error_label_color;
 uint16_t* terminal_buffer;
-uint16_t* terminal_line_ptrs[VGA_HEIGHT];
+ter_el* terminal_line_ptrs[VGA_HEIGHT];
 const char* cmd_label = "cmd:";
+const char* error_cmd_label = "unkown command";
 uint8_t cmd_offset = 0;
 const char* cmd_list[] = {
-	"text",
 	"pong",
+	"text",
 	"exit"
 };
 
@@ -78,7 +85,7 @@ void update_cursor(int x, int y)
 
 void toggle_cmd_offset() 
 {
-	cmd_offset = cmd_offset == 0? 4 : 0;
+	cmd_offset = cmd_offset == 0? strlen(cmd_label) : 0;
 }
 
 void clear_line(size_t row)
@@ -99,10 +106,11 @@ void terminal_initialize()
 {
 	terminal_row = 0;
 	terminal_column = 0+cmd_offset;
-	cmd_label_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+	cmd_label_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN,VGA_COLOR_BLACK);
+	error_label_color = vga_entry_color(VGA_COLOR_LIGHT_RED,VGA_COLOR_BLACK);
 	terminal_text_color = vga_entry_color(VGA_COLOR_CYAN,VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) VGA_MEM_BASE;
-	for (size_t y = 0; y < VGA_HEIGHT; y++) terminal_line_ptrs[y] = (uint16_t*)(sizeof(uint16_t)*y*VGA_WIDTH+VGA_MEM_BASE);
+	for (size_t y = 0; y < VGA_HEIGHT; y++) terminal_line_ptrs[y] = (ter_el*)(sizeof(uint16_t)*y*VGA_WIDTH+VGA_MEM_BASE);
 }
 
 void scroll_terminal()
@@ -123,19 +131,69 @@ void terminal_putcharat(char c, uint8_t color, size_t x, size_t y)
 	terminal_buffer[index] = vga_entry(c, color);
 }
 
-void emit_cmd_label()
+void emit_label(const char *label, uint8_t color)
 {
-	for(size_t i=0;i<sizeof(cmd_label);i++) terminal_putcharat(cmd_label[i],cmd_label_color,0+i,terminal_row);
+	size_t len = strlen(label);
+	for(size_t i=0;i<len;i++) terminal_putcharat(label[i],color,i,terminal_row);
+}
+
+char* extract_char(ter_el* elem)
+{
+	char* ret = '\0'; size_t i;
+	for(i=0;i<VGA_WIDTH;i++) {
+		if((elem+i)->c == ' ' || (elem+i)->c == '\0' || (elem+i)->c == '\n') break;
+		ret[i] = (elem+i)->c;
+	}
+	ret[i==VGA_WIDTH? VGA_WIDTH-1 : i] = '\0'; 
+	return ret;
+}
+
+int8_t cmd_parser(size_t row)
+{
+	char* usr_cmd = extract_char(terminal_line_ptrs[row]);
+	for(size_t j=0;j<3;j++) // todo: remove hardcoding
+		if(strcmp_cmd(usr_cmd+cmd_offset,cmd_list[j]) == true) return j;
+	return -2;
+}
+
+void execute_cmd(const size_t cmd_num)
+{
+	terminal_putcharat('$',cmd_label_color,terminal_column,terminal_row);
+	
+	switch (cmd_num)
+	{
+	case 0:
+		break;
+	default:
+		break;
+	}
 }
 
 void terminal_putchar(char c) 
 {
 	switch(c) {
 		case '\n':
+			int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(terminal_row);
 			terminal_column = 0+cmd_offset;
-			if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
-			else terminal_row++;
-			if (cmd_offset>0) emit_cmd_label();
+			if  (cmd_offset) {
+				if (cmd_num >= 0) {
+					execute_cmd(cmd_num);
+				}
+				else {
+					if (cmd_num < -1) {
+						if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+						else terminal_row++;
+						emit_label(error_cmd_label, error_label_color);	
+					}
+					if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+					else terminal_row++;
+					emit_label(cmd_label, cmd_label_color);
+				}
+			}
+			else {
+				if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+				else terminal_row++;
+			}
 			break;
 		case '\t': // todo: complete tab space implementation
 			size_t rem = VGA_WIDTH-terminal_column;
@@ -178,16 +236,4 @@ void backspace()
 	}
 	terminal_putcharat(' ',terminal_text_color,terminal_column,terminal_row);
 	update_cursor(terminal_column, terminal_row);
-}
-
-void cmd_parser(size_t row)
-{
-	bool match=true;
-	for(size_t i=strlen(cmd_label);i<VGA_WIDTH; i++) { 
-		for(size_t j=0;j<3;j++) {
-			for(size_t k=0;k<strlen(cmd_list[j]);k++) {
-				if ((*(terminal_line_ptrs[row]))
-			}
-		}
-	}
 }
