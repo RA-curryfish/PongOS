@@ -1,4 +1,3 @@
-#include "utils.h"
 #include "terminal.h"
 #include "kbd.h"
 
@@ -55,14 +54,17 @@ void splash_screen()
 	printstr("\t\t*****************************************\n");
 	printstr("\t\t*\t\tPong OS\t\t*\n");
 	printstr("\t\t*****************************************\n");
-
+	
 	while(true)
 	{
 		if (inb(status_port)&1) break;
 	}
-	// todo: fix extra line bug on pressing 'enter' key, etc
+
+	inb(data_port);
+	toggle_cmd_offset();
 	clear_terminal();
-	enable_cursor(0,10);
+	emit_cmd_label();
+	enable_cursor(0,15);
 }
 
 void keyboard_handle()
@@ -75,8 +77,8 @@ void keyboard_handle()
 			c = inb(data_port);
 			if (c>=0x80) { continue;}
 			else if (kbd[c] != -1 && kbd[c] != -2 && kbd[c] != -3) { // not backspace, end or capslock
-				if (kbd[c] >= 97 && kbd[c] <= 122 && (capslock || shift)) { printchar(caps_kbd[c]); }
-				else { printchar(kbd[c]); }
+				if (capslock) /*(kbd[c] >= 97 && kbd[c] <= 122 && (capslock || shift))*/ printchar(caps_kbd[c]);
+				else printchar(kbd[c]);
 			}
 			else if (kbd[c] == -1) backspace();
 			else if (kbd[c] == -3) capslock = !capslock;
@@ -84,7 +86,7 @@ void keyboard_handle()
 			// else if (kbd[c] == -5) shift = 0;
 			else if (c == 0x2A || c == 0x36) shift = true;
 		}
-	}while(kbd[c] != -2);
+	} while(kbd[c] != -2);
 }
 
 void kernel_main(void) 

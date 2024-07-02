@@ -9,9 +9,17 @@
 
 size_t terminal_row;
 size_t terminal_column;
-uint8_t terminal_color;
+uint8_t terminal_text_color;
+uint8_t cmd_label_color;
 uint16_t* terminal_buffer;
 uint16_t* terminal_line_ptrs[VGA_HEIGHT];
+const char* cmd_label = "cmd:";
+uint8_t cmd_offset = 0;
+const char* cmd_list[] = {
+	"text",
+	"pong",
+	"exit"
+};
 
 /* Hardware text mode color constants. */
 enum vga_color {
@@ -43,11 +51,6 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 	return (uint16_t) uc  | (uint16_t) color << 8;
 }
 
-void terminal_setcolor(uint8_t color) 
-{
-	terminal_color = color;
-}
-
 void disable_cursor()
 {
 	outb(0x3D4, 0x0A);
@@ -73,31 +76,31 @@ void update_cursor(int x, int y)
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
+void toggle_cmd_offset() 
+{
+	cmd_offset = cmd_offset == 0? 4 : 0;
+}
+
 void clear_line(size_t row)
 {
-	for (size_t x = 0; x < VGA_WIDTH; x++) {
-		terminal_buffer[(row*VGA_WIDTH)+x] = vga_entry(' ', terminal_color);
-	}
-	terminal_row--;
+	for (size_t x = 0; x < VGA_WIDTH; x++) terminal_buffer[(row*VGA_WIDTH)+x] = vga_entry(' ', terminal_text_color);
 }
 
 void clear_terminal()
 {
 	for (size_t y = 0; y < VGA_HEIGHT; y++) {
 		clear_line(y);
-		// for (size_t x = 0; x < VGA_WIDTH; x++) {
-		// 	const size_t index = y * VGA_WIDTH + x;
-		// 	terminal_buffer[index] = vga_entry(' ', terminal_color);
-		// }
 	}
-	terminal_row = terminal_column = 0;
+	terminal_row =0; terminal_column = 0+cmd_offset;
+	update_cursor(terminal_column,terminal_row);
 }
 
-void terminal_initialize(void) 
+void terminal_initialize() 
 {
 	terminal_row = 0;
-	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+	terminal_column = 0+cmd_offset;
+	cmd_label_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+	terminal_text_color = vga_entry_color(VGA_COLOR_CYAN,VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) VGA_MEM_BASE;
 	for (size_t y = 0; y < VGA_HEIGHT; y++) terminal_line_ptrs[y] = (uint16_t*)(sizeof(uint16_t)*y*VGA_WIDTH+VGA_MEM_BASE);
 }
@@ -120,29 +123,32 @@ void terminal_putcharat(char c, uint8_t color, size_t x, size_t y)
 	terminal_buffer[index] = vga_entry(c, color);
 }
 
+void emit_cmd_label()
+{
+	for(size_t i=0;i<sizeof(cmd_label);i++) terminal_putcharat(cmd_label[i],cmd_label_color,0+i,terminal_row);
+}
+
 void terminal_putchar(char c) 
 {
-	switch(c) 
-	{
+	switch(c) {
 		case '\n':
-			terminal_column = 0;
-			terminal_row = (terminal_row == (VGA_HEIGHT-1)) ? 0 : terminal_row+1;
+			terminal_column = 0+cmd_offset;
+			if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+			else terminal_row++;
+			if (cmd_offset>0) emit_cmd_label();
 			break;
-		case '\t':
+		case '\t': // todo: complete tab space implementation
 			size_t rem = VGA_WIDTH-terminal_column;
 			terminal_column = rem<8 ? 8-rem : terminal_column+8;
 			break;
 		default:
-			terminal_putcharat(c, terminal_color, terminal_column, terminal_row);
-			if (++terminal_column == VGA_WIDTH) 
-			{
+			terminal_putcharat(c, terminal_text_color, terminal_column, terminal_row);
+			if (++terminal_column == VGA_WIDTH) {
 				terminal_column = 0;
-				if (++terminal_row == VGA_HEIGHT)
-					terminal_row = 0;
+				if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+				else terminal_row++;
 			}
 	}
-	if (terminal_row == 0 && terminal_column == 0)
-		scroll_terminal();
 	update_cursor(terminal_column, terminal_row);
 }
 
@@ -160,16 +166,28 @@ void printstr(const char *data)
 
 void backspace()
 {
-	if(terminal_column == 0) {
+	if(terminal_column == cmd_offset) {
 		if(terminal_row == 0); // do nothing
-		else {
-			terminal_column = VGA_WIDTH;
-			--terminal_row;
+		else { // todo: fix backspace when command goes to the next line
+			// terminal_column = VGA_WIDTH; 
+			// --terminal_row;
 		}
 	}
 	else {
 		--terminal_column;
 	}
-	terminal_putcharat(' ',terminal_color,terminal_column,terminal_row);
+	terminal_putcharat(' ',terminal_text_color,terminal_column,terminal_row);
 	update_cursor(terminal_column, terminal_row);
+}
+
+void cmd_parser(size_t row)
+{
+	bool match=true;
+	for(size_t i=strlen(cmd_label);i<VGA_WIDTH; i++) { 
+		for(size_t j=0;j<3;j++) {
+			for(size_t k=0;k<strlen(cmd_list[j]);k++) {
+				if ((*(terminal_line_ptrs[row]))
+			}
+		}
+	}
 }

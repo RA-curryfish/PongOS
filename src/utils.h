@@ -23,6 +23,11 @@ size_t strlen(const char *s)
 	return len-1;
 }
 
+bool strcmp(const char *s1, const char *s2)
+{
+	
+}
+
 void memcpy(void *dest, void *source, size_t len)
 {
 	// todo: need to handle \0
