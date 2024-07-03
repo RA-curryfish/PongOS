@@ -36,6 +36,36 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
+.macro GDT_SETUP
+gdt_start:
+gdt_null:
+	.long 0
+	.long 0
+gdt_kern_code:
+    .word 0xffff
+    .word 0x0
+    .byte 0x0
+    .byte 0b10011010
+    .byte 0b11001111
+    .byte 0x0
+gdt_kern_data:
+    .word 0xffff
+    .word 0x0
+    .byte 0x0
+    .byte 0b10010010
+    .byte 0b11001111
+    .byte 0x0
+gdt_user_code:
+
+gdt_user_data:
+gdt_end:
+gdt_descriptor:
+    .word gdt_end - gdt_start
+    .long gdt_start
+.endm
+
+.macro PROTECTED_MODE
+.endm
 /*
 The linker script specifies _start as the entry point to the kernel and the
 bootloader will jump to this position once the kernel has been loaded. It
@@ -75,7 +105,8 @@ _start:
 	C++ features such as global constructors and exceptions will require
 	runtime support to work as well.
 	*/
-
+	GDT_SETUP
+	PROTECTED_MODE
 	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
 	aligned at the time of the call instruction (which afterwards pushes
