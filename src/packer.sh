@@ -5,7 +5,7 @@ export PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
 which -- i686-elf-as || export PATH="$PREFIX/bin:$PATH"
 
 # creating boot assembled object
-i686-elf-as boot.s -o boot.o
+i686-elf-as boot_common.h boot.s -o boot.o
 
 # creating kernel compiled object
 i686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
@@ -20,5 +20,5 @@ grub-mkrescue -o pongos.iso isodir
 # clean object files in cur dir
 rm *.o
 
-# run it bruhh
-qemu-system-i386 -cdrom pongos.iso
+# run it bruhh. Default is 128M. Anything <= 2M will not be able to boot
+qemu-system-i386 -cdrom pongos.iso -m 128M
