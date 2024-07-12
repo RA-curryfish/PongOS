@@ -5,7 +5,7 @@ export PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
 which -- i686-elf-as || export PATH="$PREFIX/bin:$PATH"
 
 # creating boot assembled object
-i686-elf-as boot_common.h boot.s -o boot.o
+i686-elf-as asm_helper.s boot.s -o boot.o
 
 # creating kernel compiled object
 i686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra

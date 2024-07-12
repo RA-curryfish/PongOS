@@ -1,5 +1,6 @@
 #include "terminal.h"
 #include "kbd.h"
+#include "mem_manager.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -8,41 +9,6 @@
 #ifndef __i386__
 #error "not using x86 compiler??"
 #endif
-
-// #define INT_DISABLE 0
-// #define INT_ENABLE  0x200
-// #define PIC1 0x20
-// #define PIC2 0xA0
-// #define ICW1 0x11
-// #define ICW4 0x01
-
-// void init_pics(int pic1, int pic2)
-// {
-//    /* send ICW1 */
-// 	outb(PIC1, ICW1);
-// 	outb(PIC2, ICW1);
-
-//    /* send ICW2 */
-// 	outb(PIC1 + 1, pic1);   
-// 	outb(PIC2 + 1, pic2);   
-
-//    /* send ICW3 */
-// 	outb(PIC1 + 1, 4);   
-// 	outb(PIC2 + 1, 2);
-
-//    /* send ICW4 */
-// 	outb(PIC1 + 1, ICW4);
-// 	outb(PIC2 + 1, ICW4);
-
-//    /* disable all IRQs */
-// 	outb(PIC1 + 1, 0xFF);
-// }
-
-bool capslock = false; // todo: query for capslock state
-bool shift = false;
-const uint16_t data_port = 0x60;
-const uint16_t status_port = 0x64;
-
 
 void splash_screen()
 {
@@ -91,7 +57,10 @@ void keyboard_handle()
 
 void kernel_main(void) 
 {
-	// init_pics(0x20, 0x28);
+	init_pd();
+	init_pt();
+	add_entry();
+	load_pd(page_dir);
 	splash_screen();
 	keyboard_handle();
 }
