@@ -35,7 +35,7 @@ _start:
     mov %eax, page_directory
     mov $0b00100111, %al
     mov %al, page_directory
-
+	
 	mov $0, %eax
     mov $page_table, %ebx
 	page_setup_start:
@@ -53,7 +53,12 @@ _start:
 
 	mov $0x1235, %eax
     mov %eax, 0x1000
-	VGA_PRINT_HEX_4 0x200000
+	VGA_PRINT_HEX_4 0x1000
+
+	# map page 0 to 0x1000
+	mov page_table, %eax
+    or $0x00001000, %eax
+    mov %eax, page_table
 
 	# enable paging
 	mov $page_directory, %eax
@@ -61,11 +66,17 @@ _start:
 	mov %cr0, %eax
     or $0x80000000, %eax
     mov %eax, %cr0
-	VGA_PRINT_HEX_4 0x200000
 
-	
+	mov $0x6666, %eax
+	mov %eax, 0
+	VGA_PRINT_HEX_4 0x0
 
+	# disable paging
+	mov %cr0, %eax
+    and $0x7FFFFFFF, %eax
+    mov  %eax, %cr0
 
+	VGA_PRINT_HEX_4 0x0
 	/*call kernel_main*/
 
 	cli

@@ -6,28 +6,28 @@ extern void enable_paging();
 // extern uint32_t page_dir;
 // extern uint32_t page_tab;
 
-uint32_t page_dir[1024] __attribute__((aligned(4096))); // change this to page frame allocator
-uint32_t page_tab[1024] __attribute__((aligned(4096))); // multiple of 0x1000, eg: 0x11000
+// uint32_t page_dir[1024] __attribute__((aligned(4096))); // change this to page frame allocator
+// uint32_t page_tab[1024] __attribute__((aligned(4096))); // multiple of 0x1000, eg: 0x11000
 
-void init_pd()
-{
-    for(size_t i=0; i<1024;i++) {
-        page_dir[i] = 0x2; // supervisor, write enabled, not present
-    }
-}
+// void init_pd()
+// {
+//     for(size_t i=0; i<1024;i++) {
+//         page_dir[i] = 0x2; // supervisor, write enabled, not present
+//     }
+// }
 
-void init_pt()
-{
-    for(size_t i=0;i<1024;i++) {
-        page_tab[i] = (i*0x1000) | 3; // supervisor, r/w, present 
-    }
-}
+// void init_pt()
+// {
+//     for(size_t i=0;i<1024;i++) {
+//         page_tab[i] = (i*0x1000) | 3; // supervisor, r/w, present 
+//     }
+// }
 
-void add_entry()
-{
-    page_dir[0] = ((uint32_t) page_tab) | 3;
-    page_dir[1023] = ((uint32_t) page_dir) | 3;
-}
+// void add_entry()
+// {
+//     page_dir[0] = ((uint32_t) page_tab) | 3;
+//     page_dir[1023] = ((uint32_t) page_dir) | 3;
+// }
 
 void load_pd(uint32_t* page_dir_addr)
 {

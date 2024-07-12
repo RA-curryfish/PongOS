@@ -21,18 +21,6 @@ void splash_screen()
 	printstr("\t\t*\t\tPong OS\t\t*\n");
 	printstr("\t\t*****************************************\n");
 	
-	uint8_t* ptr = (uint8_t*)page_tab;
-	for(size_t i=0;i<4;i++)
-	{
-		printchar(ptr[i]);
-	}
-	printchar('\n');
-	ptr = (uint8_t*)page_dir;
-	for(size_t i=0;i<4;i++)
-	{
-		printchar(ptr[i]);
-	}
-
 	while(true)
 	{
 		if (inb(status_port)&1) break;
@@ -69,10 +57,10 @@ void keyboard_handle()
 
 void kernel_main(void) 
 {
-	init_pd();
-	init_pt();
-	add_entry();
-	load_pd(page_dir);
+	// init_pd();
+	// init_pt();
+	// add_entry();
+	// load_pd(page_dir);
 	splash_screen();
 	keyboard_handle();
 }
