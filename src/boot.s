@@ -1,3 +1,5 @@
+#include "asm_helper.s"
+
 .set ALIGN,    1<<0             /* align loaded modules on page boundaries */
 .set MEMINFO,  1<<1             /* provide memory map */
 .set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
@@ -16,6 +18,10 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
+.section .data
+.equ page_directory, __end_align_4k
+.equ page_table, __end_align_4k+0x1000
+
 .section .text
 .global _start
 .type _start, @function
@@ -24,20 +30,44 @@ _start:
 
 	PROTECTED_MODE
 
-	call kernel_main
+	mov $page_table, %eax
+    and $0xF000, %ax
+    mov %eax, page_directory
+    mov $0b00100111, %al
+    mov %al, page_directory
 
-	/*
-	If the system has nothing more to do, put the computer into an
-	infinite loop. To do that:
-	1) Disable interrupts with cli (clear interrupt enable in eflags).
-	   They are already disabled by the bootloader, so this is not needed.
-	   Mind that you might later enable interrupts and return from
-	   kernel_main (which is sort of nonsensical to do).
-	2) Wait for the next interrupt to arrive with hlt (halt instruction).
-	   Since they are disabled, this will lock up the computer.
-	3) Jump to the hlt instruction if it ever wakes up due to a
-	   non-maskable interrupt occurring or due to system management mode.
-	*/
+	mov $0, %eax
+    mov $page_table, %ebx
+	page_setup_start:
+		cmp $0x400, %eax
+		je page_setup_end
+		mov %eax, %edx
+		shl $12, %edx
+		mov $0b00000011, %dl
+		and $0xF0, %dh
+		mov %edx, (%ebx)
+		inc %eax
+		add $4, %ebx
+		jmp page_setup_start
+	page_setup_end:
+
+	mov $0x1235, %eax
+    mov %eax, 0x1000
+	VGA_PRINT_HEX_4 0x200000
+
+	# enable paging
+	mov $page_directory, %eax
+    mov %eax, %cr3
+	mov %cr0, %eax
+    or $0x80000000, %eax
+    mov %eax, %cr0
+	VGA_PRINT_HEX_4 0x200000
+
+	
+
+
+	/*call kernel_main*/
+
 	cli
 1:	hlt
 	jmp 1b

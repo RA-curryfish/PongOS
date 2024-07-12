@@ -3,9 +3,11 @@
 
 extern void load_page_dir(uint32_t* pd_addr);
 extern void enable_paging();
+// extern uint32_t page_dir;
+// extern uint32_t page_tab;
 
 uint32_t page_dir[1024] __attribute__((aligned(4096))); // change this to page frame allocator
-uint32_t page_tab[1024] __attribute__((aligned(4096)));
+uint32_t page_tab[1024] __attribute__((aligned(4096))); // multiple of 0x1000, eg: 0x11000
 
 void init_pd()
 {

@@ -35,6 +35,7 @@ SECTIONS
 		*(COMMON)
 		*(.bss)
 	}
-
+	. = ALIGN(512);
+	__end = .;
 	__end_align_4k = ALIGN(4K);
 }

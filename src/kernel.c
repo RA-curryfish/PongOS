@@ -21,6 +21,18 @@ void splash_screen()
 	printstr("\t\t*\t\tPong OS\t\t*\n");
 	printstr("\t\t*****************************************\n");
 	
+	uint8_t* ptr = (uint8_t*)page_tab;
+	for(size_t i=0;i<4;i++)
+	{
+		printchar(ptr[i]);
+	}
+	printchar('\n');
+	ptr = (uint8_t*)page_dir;
+	for(size_t i=0;i<4;i++)
+	{
+		printchar(ptr[i]);
+	}
+
 	while(true)
 	{
 		if (inb(status_port)&1) break;
