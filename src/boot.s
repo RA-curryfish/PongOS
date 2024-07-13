@@ -1,5 +1,3 @@
-#include "asm_helper.s"
-
 .set ALIGN,    1<<0             /* align loaded modules on page boundaries */
 .set MEMINFO,  1<<1             /* provide memory map */
 .set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
@@ -18,10 +16,6 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
-.section .data
-.equ page_directory, __end_align_4k
-.equ page_table, __end_align_4k+0x1000
-
 .section .text
 .global _start
 .type _start, @function
@@ -30,7 +24,7 @@ _start:
 
 	PROTECTED_MODE
 
-	mov $page_table, %eax
+	/*mov $page_table, %eax
     and $0xF000, %ax
     mov %eax, page_directory
     mov $0b00100111, %al
@@ -76,8 +70,8 @@ _start:
     and $0x7FFFFFFF, %eax
     mov  %eax, %cr0
 
-	VGA_PRINT_HEX_4 0x0
-	/*call kernel_main*/
+	VGA_PRINT_HEX_4 0x0 */
+	call kernel_main
 
 	cli
 1:	hlt
