@@ -57,15 +57,6 @@ void keyboard_handle()
 
 void kernel_main(void) 
 {
-	uint32_t* pd = init_pd();
-	uint32_t* pt = init_pt(); // todo: wrapper to assign pt?
-	char* str = "1234"; 
-	add_pd_entry(pd,0,(uint32_t)pt);
-	uint32_t* page = allocate_page();
-	add_pt_entry(pt,0,(uint32_t)page);
-	memcpy((void*)page,(void*)str,sizeof(char)*strlen(str));
-	
-	// load_pd(pd);
 	splash_screen();
-	// keyboard_handle();
+	keyboard_handle();
 }

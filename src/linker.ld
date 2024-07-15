@@ -6,7 +6,9 @@ ENTRY(_start)
    kernel image. */
 SECTIONS
 {
-	. = 2M;
+	/*	if this goes beyond the mapped pages, the kernel dies once paging
+		is enabled, the virtual addresses aren't translated properly? */
+	. = 2M; 
 
 	/* First put the multiboot header, as it is required to be put very early
 	   in the image or the bootloader won't recognize the file format.

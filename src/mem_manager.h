@@ -2,8 +2,6 @@
 #include "utils.h"
 
 extern void load_page_dir(uint32_t* pd_addr);
-extern void enable_paging();
-extern VGA_PRINT_HEX_4(uint32_t *addr);
 
 uint32_t* allocate_page()
 {
@@ -47,11 +45,10 @@ void add_pt_entry(uint32_t* page_tab, size_t entry, uint32_t val)
         val = val | 3; 
         page_tab[entry] = val;
     }
-    VGA_PRINT_HEX_4(page_tab);
+    // VGA_PRINT_HEX_4(page_tab);
 }
 
 void load_pd(uint32_t* page_dir)
 {
     load_page_dir(page_dir);
-    enable_paging();
 }

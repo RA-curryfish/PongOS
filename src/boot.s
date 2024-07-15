@@ -16,20 +16,25 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
+.section .data
+.equ page_directory, __end_align_4k
+.equ page_table, __end_align_4k+0x1000
+
 .section .text
 .global _start
 .type _start, @function
 _start:
 	mov $stack_top, %esp
 
-	PROTECTED_MODE
-
-	/*mov $page_table, %eax
+	# identity mapped first 4MB of RAM
+	# set first pde
+	mov $page_table, %eax
     and $0xF000, %ax
     mov %eax, page_directory
     mov $0b00100111, %al
     mov %al, page_directory
 	
+	# set 1024 ptes
 	mov $0, %eax
     mov $page_table, %ebx
 	page_setup_start:
@@ -45,32 +50,32 @@ _start:
 		jmp page_setup_start
 	page_setup_end:
 
-	mov $0x1235, %eax
+	/*mov $0x1235, %eax
     mov %eax, 0x1000
 	VGA_PRINT_HEX_4 0x1000
-
 	# map page 0 to 0x1000
 	mov page_table, %eax
     or $0x00001000, %eax
-    mov %eax, page_table
+    mov %eax, page_table*/
 
 	# enable paging
 	mov $page_directory, %eax
-    mov %eax, %cr3
-	mov %cr0, %eax
-    or $0x80000000, %eax
-    mov %eax, %cr0
+	mov %eax, %cr3
+    ENABLE_PAGING
+	
+	# setup GDT and jump to protected mode
+	PROTECTED_MODE
 
-	mov $0x6666, %eax
+	/*mov $0x6666, %eax
 	mov %eax, 0
 	VGA_PRINT_HEX_4 0x0
-
 	# disable paging
 	mov %cr0, %eax
     and $0x7FFFFFFF, %eax
     mov  %eax, %cr0
-
-	VGA_PRINT_HEX_4 0x0 */
+	VGA_PRINT_HEX_4 0x0
+	VGA_PRINT_HEX_4 0x1000*/
+	
 	call kernel_main
 
 	cli

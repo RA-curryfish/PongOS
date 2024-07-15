@@ -127,11 +127,11 @@
         POP_EDAX
 .endm
 
-; .data
-; .global page_dir
-; .equ page_dir, __end_align_4k
-; .global page_tab
-; .equ page_tab, __end_align_4k+0x1000
+.macro ENABLE_PAGING
+    mov %cr0, %eax
+    or $0x80000000, %eax
+    mov %eax, %cr0
+.endm
 
 .text
 .global load_page_dir
@@ -142,18 +142,6 @@ load_page_dir:
     mov 8(%esp), %eax /* arg1 -> skip first two slots of 4 bytes each*/
     mov %eax, %cr3
     mov %ebp, %esp /* epilogue */
-    pop %ebp
-    ret
-
-.global enable_paging
-.type enable_paging, @function
-enable_paging:
-    push %ebp
-    mov %esp, %ebp
-    mov %cr0, %eax
-    or $0x80000000, %eax
-    mov %eax, %cr0
-    mov %ebp, %esp
     pop %ebp
     ret
 
