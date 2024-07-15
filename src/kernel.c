@@ -1,6 +1,7 @@
 #include "terminal.h"
 #include "kbd.h"
 #include "mem_manager.h"
+#include "asm_helper.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -38,7 +39,7 @@ void keyboard_handle()
 	uint8_t c = 0;
 	uint8_t s = 0;
 	do {
-		s = inb(status_port);
+		s = inb(status_port); // todo: refactor to remove inb/outb from kernel file
 		if (((s&1)==1)) {
 			c = inb(data_port);
 			if (c>=0x80) { continue;}

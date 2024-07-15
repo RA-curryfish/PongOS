@@ -1,11 +1,11 @@
 #pragma once
 #include "utils.h"
+#include "asm_helper.h"
 #define VGA_MEM_BASE 0xB8000
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
 void terminal_putchar(char c);
-// void printchar(char c);
 
 typedef struct terminal_element {
 	unsigned char c; // first 8 bits
