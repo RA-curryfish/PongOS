@@ -9,9 +9,11 @@ i686-elf-as asm_helper.s boot.s -o boot.o
 
 # creating kernel compiled object
 i686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+i686-elf-gcc -c utils.c -o utils.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+i686-elf-gcc -c terminal.c -o terminal.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
 # linking boot and kernel objects using linker
-i686-elf-gcc -T linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib boot.o kernel.o -lgcc
+i686-elf-gcc -T linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib boot.o terminal.o kernel.o utils.o -lgcc
 mv pongos.bin isodir/boot
 
 # creating ISO to load from grub and boot into the OS

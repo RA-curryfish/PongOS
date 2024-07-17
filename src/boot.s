@@ -50,10 +50,10 @@ _start:
 		jmp page_setup_start
 	page_setup_end:
 
-	/*mov $0x1235, %eax
-    mov %eax, 0x1000
-	VGA_PRINT_HEX_4 0x1000
-	# map page 0 to 0x1000
+/*	mov $0x1235, %eax
+    mov %eax, 0x500
+	VGA_PRINT_HEX_4 0x500
+	/*# map page 0 to 0x1000
 	mov page_table, %eax
     or $0x00001000, %eax
     mov %eax, page_table*/

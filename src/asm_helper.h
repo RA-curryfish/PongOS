@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+const uint16_t data_port = 0x60;
+const uint16_t status_port = 0x64;
+
 static inline void outb(uint16_t port, char val)
 {
 	asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
