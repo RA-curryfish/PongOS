@@ -1,4 +1,5 @@
 #include "terminal.h"
+#include "hal.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -35,6 +36,7 @@ void kernel_main(void)
 	// create PCB for kernel with pid = 1
 	// pid_arr[pid_ctr] = true;
 	// create_pcb();
+	init_hal();
 	splash_screen();
 	keyboard_handle();
 }

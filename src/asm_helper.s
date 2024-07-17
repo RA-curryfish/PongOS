@@ -139,14 +139,19 @@
 load_page_dir:
     push %ebp /* prologue */
     mov %esp, %ebp
-    mov 8(%esp), %eax /* arg1 -> skip first two slots of 4 bytes each*/
+    mov 8(%ebp), %eax /* arg1 -> skip first two slots of 4 bytes each*/
     mov %eax, %cr3
     mov %ebp, %esp /* epilogue */
     pop %ebp
     ret
 
-.global tst_paging
-.type tst_paging, @function
-tst_paging:
+.global load_idt
+.type load_idt, @function
+load_idt:
     push %ebp
     mov %esp, %ebp
+    mov 8(%ebp), %eax
+    lidt (%eax)
+    mov %ebp, %esp
+    pop %ebp
+    ret
