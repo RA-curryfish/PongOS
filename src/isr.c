@@ -41,6 +41,7 @@ static const char* const exceptions[] = {
 };
 
 void isr_initialize_gates();
+extern void panic();
 
 void isr_initialize()
 {
@@ -58,8 +59,10 @@ void __attribute__((cdecl)) isr_handler_func(registers* regs)
         isr_handlers[regs->interrupt](regs); // call isr with regs as param
     else if(regs->interrupt >= 32)
         printstr("UNHANDleD");
-    else
+    else {
         printstr("PANIC");
+        panic();
+    }
 }
 
 void isr_register_handler(int interrupt, isr_handler handler)

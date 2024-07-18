@@ -21,6 +21,7 @@ stack_top:
 .equ page_table, __end_align_4k+0x1000
 
 .section .text
+.include "asm_macros.inc"
 .global _start
 .type _start, @function
 _start:
