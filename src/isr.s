@@ -5,8 +5,8 @@
 .macro isr_noerrorcode c
 .global ISR\c
 ISR\c:
-    push 0 # dummy err code
-    push \c # push interrupt num
+    push $0 # dummy err code
+    push $\c # push interrupt num
     jmp isr_common
 .endm
 
@@ -14,7 +14,7 @@ ISR\c:
 .global ISR\c
 ISR\c:
     # cpu pushes err code
-    push \c # push interrupt num
+    push $\c # push interrupt num
     jmp isr_common
 .endm
 
