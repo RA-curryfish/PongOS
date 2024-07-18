@@ -10,6 +10,5 @@ void init_hal()
     
     // Initialize gates -> Fill each IDT entry by idt_set_gate
     // -> enable every gate (sst IDT_FLAG_PRESENT)
-    // -> disable int 0x80 for now...
     isr_initialize();
 }

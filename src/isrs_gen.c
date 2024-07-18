@@ -259,18 +259,10 @@ void __attribute((cdecl)) ISR253();
 void __attribute((cdecl)) ISR254();
 void __attribute((cdecl)) ISR255();
 
-void __attribute((cdecl)) ISR0()
-{
-}
-
-void __attribute((cdecl)) ISR4()
-{
-}
-
 void isr_initialize_gates()
 {
     idt_set_gate(0, ISR0, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
-    /*idt_set_gate(1, ISR1, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
+    idt_set_gate(1, ISR1, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
     idt_set_gate(2, ISR2, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
     idt_set_gate(3, ISR3, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
     idt_set_gate(4, ISR4, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
@@ -525,5 +517,4 @@ void isr_initialize_gates()
     idt_set_gate(253, ISR253, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
     idt_set_gate(254, ISR254, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
     idt_set_gate(255, ISR255, GDT_CODE_SEG, IDT_FLAG_RING0 | IDT_FLAG_GATE_32BIT_INT);
-*/
 }

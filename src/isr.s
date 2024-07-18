@@ -2,24 +2,27 @@
 # All int. jmp to a common label, and then handled by C code
 .code32
 
-#include "isrs_gen.inc"
-
-.macro ISR_NOERRCODE n
-.global ISR\n
-ISR\n:
-    push 0 # push dummy err code
-    push \n # push interrupt num
+.macro isr_noerrorcode c
+.global ISR\c
+ISR\c:
+    push 0 # dummy err code
+    push \c # push interrupt num
     jmp isr_common
 .endm
 
-.macro ISR_ERRCODE n
-.global ISR\n
-ISR\n:
-    # cpu pushes dummy err code
-    push \n # push interrupt num
+.macro isr_errorcode c
+.global ISR\c
+ISR\c:
+    # cpu pushes err code
+    push \c # push interrupt num
     jmp isr_common
 .endm
 
+.section .text
+# Include all ISRs which expand into functions by the above macros
+.include "isrs_gen.inc"
+
+# Common part of the ISR
 isr_common:
     pusha
     
@@ -48,5 +51,3 @@ isr_common:
     popa # restore gen. registers
     add $8, %esp # clear stack of error code, and int. num
     iret # special return, pops cs, eip, eflags, ss, esp
-
-

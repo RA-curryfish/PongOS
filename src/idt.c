@@ -17,9 +17,7 @@ typedef struct
 } __attribute__((packed)) idt_descriptor;
 
 idt_entry idt[256];
-
 idt_descriptor idt_descriptor_val = { sizeof(idt) - 1, idt };
-
 extern void __attribute__((cdecl)) load_idt(idt_descriptor* idt_descriptor_val);
 
 void idt_initialize()

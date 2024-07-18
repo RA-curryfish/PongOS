@@ -10,7 +10,7 @@ typedef struct
     uint32_t eip, cs, eflags, esp, ss;                      // pushed automatically by CPU
 } __attribute__((packed)) registers;
 
-typedef void (*isr_handler)(registers* regs);
+typedef void (*isr_handler)(registers* regs); // function pointer to the isr with param regs
 
 void isr_initialize();
 void isr_register_handler(int interrupt, isr_handler handler);
