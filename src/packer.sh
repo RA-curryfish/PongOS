@@ -1,21 +1,27 @@
 #!/bin/bash
 
-# add binary location to PATH
-export PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
-which -- i686-elf-as || export PATH="$PREFIX/bin:$PATH"
+GCC="i686-elf-gcc"
+ASM="i686-elf-as"
+PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
+CFLAGS="-std=gnu99 -ffreestanding -O2 -Wall -Wextra"
+which -- $ASM || PATH="$PREFIX/bin:$PATH"
+CFILES=$(find . -name "*.c")
+OFILES="boot.o"
+ASMFILES=$(find . -name "*.s")
 
 # creating boot assembled object
-i686-elf-as asm_helper.s boot.s -o boot.o
+$ASM $ASMFILES -o boot.o
 
 # creating kernel compiled object
-i686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-i686-elf-gcc -c utils.c -o utils.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-i686-elf-gcc -c terminal.c -o terminal.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-i686-elf-gcc -c hal.c -o hal.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-i686-elf-gcc -c idt.c -o idt.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+for file in $CFILES
+do
+    ofile="${file%.*}.o"
+    OFILES="$OFILES $ofile"
+    $GCC -c $file -o $ofile $CFLAGS 
+done
 
 # linking boot and kernel objects using linker
-i686-elf-gcc -T linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib boot.o idt.o hal.o terminal.o kernel.o utils.o -lgcc
+$GCC -T linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib $OFILES -lgcc
 mv pongos.bin isodir/boot
 
 # creating ISO to load from grub and boot into the OS

@@ -2,7 +2,7 @@
 # All int. jmp to a common label, and then handled by C code
 .code32
 
-extern isr_handler_func
+#include "isrs_gen.inc"
 
 .macro ISR_NOERRCODE n
 .global ISR\n
@@ -20,8 +20,6 @@ ISR\n:
     jmp isr_common
 .endm
 
-%include "isrs_gen.inc"
-
 isr_common:
     pusha
     
@@ -37,7 +35,7 @@ isr_common:
     mov %ax, %ss
 
     push %esp # pass esp as argument for isr handler to access stuff
-    call isr_handler
+    call isr_handler_func
     add $4, %esp # clear stack, equivalent to pop
 
     pop %eax # revert back to state before "kernel data segment"

@@ -1,6 +1,7 @@
 #include "isr.h"
 #include "idt.h"
 #include <stddef.h>
+#include "terminal.h"
 
 isr_handler isr_handlers[256];
 
@@ -44,14 +45,25 @@ void isr_initialize_gates();
 void isr_initialize()
 {
     isr_initialize_gates();
-    for (uint8_t i=0;i<256;i++)
+    for (uint16_t i=0;i<256;i++)
         idt_enable_gate(i);
     idt_disable_gate(0x80);
 }
 
 void __attribute__((cdecl)) isr_handler_func(registers* regs)
 {
+    printchar(regs->interrupt);
+    
     if(isr_handlers[regs->interrupt] != NULL) 
-        isr_handlers[regs->interrupt](regs);
+        isr_handlers[regs->interrupt](regs); // call isr with regs as param
+    else if(regs->interrupt >= 32)
+        printstr("UNHANDleD");
+    else
+        printstr("PANIC");
 }
 
+void isr_register_handler(int interrupt, isr_handler handler)
+{
+    isr_handlers[interrupt] = handler;
+    idt_enable_gate(interrupt);
+}
