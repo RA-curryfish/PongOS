@@ -56,14 +56,13 @@ void __attribute__((cdecl)) isr_handler_func(registers* regs)
     if(isr_handlers[regs->interrupt] != NULL) 
         isr_handlers[regs->interrupt](regs); // call isr with regs as param
     else if(regs->interrupt >= 32)
-        printstr("UNHANDleD");
+        printstr("UNHANDleD ISR\n");
     else {
         printstr("PANIC");
         panic();
     }
 }
 
-// for later ???
 void isr_register_handler(int interrupt, isr_handler handler)
 {
     isr_handlers[interrupt] = handler;

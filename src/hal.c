@@ -1,6 +1,7 @@
 #include "hal.h"
 #include "idt.h"
 #include "isr.h"
+#include "irq.h"
 
 void init_hal()
 {
@@ -11,4 +12,8 @@ void init_hal()
     // Initialize gates -> Fill each IDT entry by idt_set_gate
     // -> enable every gate (sst IDT_FLAG_PRESENT)
     isr_initialize();
+
+    // Initialize PIC -> register 16 ISRs (32-47) with IRQ handler
+    // -> enable interrupts
+    irq_initialize();
 }

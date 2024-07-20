@@ -1,6 +1,8 @@
 bool capslock = false; // todo: query for capslock state
 bool shift = false;
 
+const uint16_t kbd_data_port = 0x60;
+const uint16_t kbd_status_port = 0x64;
 /* Credits to https://github.com/BurntRanch/badOS */
 char kbd [128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', -1,   

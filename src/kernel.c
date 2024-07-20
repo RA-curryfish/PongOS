@@ -9,10 +9,21 @@
 #error "not using x86 compiler??"
 #endif
 
+void timer()
+{
+	// timer IRQ
+}
+
+void kb()
+{
+	// KEYBOARD HANDLERRRR
+}
+
 void kernel_main(void) 
 {
 	splash_screen();
 	init_hal();
-	// __asm("int $0x21");
+	irq_register_handler(0,timer);
+	irq_register_handler(1,kb);
 	keyboard_handle();
 }
