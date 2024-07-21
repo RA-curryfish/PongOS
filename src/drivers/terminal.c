@@ -1,6 +1,7 @@
 #include "terminal.h"
-#include "kbd.h"
-#include "asm_helper.h"
+#include "../asm_helper.h"
+#include "../utils.h"
+#include "keyboard.h"
 
 size_t terminal_row;
 size_t terminal_column;
@@ -219,35 +220,11 @@ void splash_screen()
 	printstr("\t\t*\t\tPong OS\t\t*\n");
 	printstr("\t\t*****************************************\n");
 	
-	while(true)
-	{
-		if (inb(kbd_status_port)&1) break;
-	}
-
-	inb(kbd_data_port);
+	while(true) if (inb(KBD_STATUS_PORT)&1) break; // yes, it is funny
+	inb(KBD_DATA_PORT);
+	
 	toggle_cmd_offset();
 	clear_terminal();
 	emit_label(cmd_label,cmd_label_color);
 	enable_cursor(0,15);
-}
-
-void keyboard_handle()
-{		
-	uint8_t c = 0;
-	uint8_t s = 0;
-	// s = inb(kbd_status_port);
-	// if (((s&1)==1)) {
-	c = inb(kbd_data_port);
-	if (c>=0x80) { }
-	else if (kbd[c] != -1 && kbd[c] != -2 && kbd[c] != -3) { // not backspace, end or capslock
-		if (capslock) /*(kbd[c] >= 97 && kbd[c] <= 122 && (capslock || shift))*/ printchar(caps_kbd[c]);
-		else printchar(kbd[c]);
-	}
-	else if (kbd[c] == -1) backspace();
-	else if (kbd[c] == -3) capslock = !capslock;
-	// else if (kbd[c] == -4) shift = true; // todo: fix shift
-	// else if (kbd[c] == -5) shift = 0;
-	else if (c == 0x2A || c == 0x36) shift = true;
-	// }
-	// while(kbd[c] != -2);
 }

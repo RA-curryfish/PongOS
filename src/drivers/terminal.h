@@ -1,6 +1,6 @@
 #pragma once
-
-#include "utils.h"
+#include <stddef.h>
+#include <stdint.h>
 #define VGA_MEM_BASE 0xB8000
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
@@ -47,4 +47,3 @@ void printchar(char data);
 void printstr(const char *data);
 void backspace();
 void splash_screen();
-void keyboard_handle();

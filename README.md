@@ -19,6 +19,9 @@ Building my version of the BareBonesOS, a minimal OS built for the x86 architect
 ## Details
 Some details of certain concepts 
 
+### Misc.
+- Remember to keep the kernel in some kind of a busy loop otherwise it will exit and you will spend a half a day trying to figure out why interrupts aren't working :)
+
 ### Interrupts
 There are three categories:
 - CPU interrupts: The first 32 are reserved by the CPU for itself
@@ -27,7 +30,7 @@ There are three categories:
 
 A table of 256 entries called Interrupt Descriptor Table needs to be set up to handle interrupts. The BIOS sets up a temporary one at 0x00, but the kernel can move it later once BIOS exits. Each entry is 8 bytes. Once this kernel is initialized, the Hardware Abstraction Layer loads the appropriate register with the IDT descriptor so the CPU knows where to find the table.
 
-Then, ISR are initialized mapped by setting flags, ISR function addresses, etc, in each entry of the IDT. For hardware interrupts, the PIC will be set up first with ICWs. Then the 16 irqs will be registered by the ISR register handler. Then interrupts can be enabled. Now, whenever an interrupt occurs, the CPU indexes into the IDT, picks the ISR function address executes those instructions. The registered handler for the ISR will be called from here.
+Then, ISR are initialized mapped by setting flags, ISR function addresses, etc, in each entry of the IDT. For hardware interrupts, the PIC will be set up first with ICWs. Then the 16 irqs will be registered by the ISR register handler. Then interrupts can be enabled. Now, whenever an interrupt occurs, the CPU indexes into the IDT, picks the ISR function address executes those instructions. The registered handler for the ISR will be called from here. 
 
 Links:
 - https://wiki.osdev.org/8259_PIC

@@ -1,6 +1,6 @@
 #include "irq.h"
 #include "pic.h"
-#include "terminal.h"
+#include "drivers/terminal.h"
 
 #define PIC_OFFSET 0x20 // start at 32 in the Interrupt table
 

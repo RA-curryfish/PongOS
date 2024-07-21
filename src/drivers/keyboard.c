@@ -1,8 +1,8 @@
-bool capslock = false; // todo: query for capslock state
-bool shift = false;
+#include <stdbool.h>
+#include "keyboard.h"
+#include "terminal.h"
+#include "../asm_helper.h"
 
-const uint16_t kbd_data_port = 0x60;
-const uint16_t kbd_status_port = 0x64;
 /* Credits to https://github.com/BurntRanch/badOS */
 char kbd [128] = {
   0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', -1,   
@@ -69,3 +69,21 @@ char caps_kbd [128] = {
   0,  /* F11 Key */
   0,  /* F12 Key */
   0,  /* All other keys are undefined */	};
+
+bool capslock = false; // todo: query for capslock state
+bool shift = false;
+
+void keyboard_handle()
+{		
+	uint8_t c = inb(KBD_DATA_PORT);
+	
+    if(c<0x80) {
+        if(kbd[c] != -1 && kbd[c] != -2 && kbd[c] != -3)  {
+            if(capslock) printchar(caps_kbd[c]);
+            else printchar(kbd[c]);
+        }
+        else if (kbd[c] == -1) backspace();
+        // else if (kbd[c] == -2) // END key. quit?? disable KB int???
+	    else if (kbd[c] == -3) capslock = !capslock;
+    }
+}

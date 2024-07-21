@@ -5,9 +5,9 @@ ASM="i686-elf-as"
 PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
 CFLAGS="-std=gnu99 -ffreestanding -O2 -Wall -Wextra"
 which -- $ASM || PATH="$PREFIX/bin:$PATH"
-CFILES=$(find . -name "*.c")
+CFILES=$(find ./ -name "*.c")
 OFILES="boot.o"
-ASMFILES=$(find . -name "*.s")
+ASMFILES=$(find ./ -name "*.s")
 
 # creating boot assembled object
 $ASM $ASMFILES -o boot.o
@@ -29,6 +29,7 @@ grub-mkrescue -o pongos.iso isodir
 
 # clean object files in cur dir
 rm *.o
+rm drivers/*.o
 
 # run it bruhh. Default is 128M. Anything <= 2M will not be able to boot
 qemu-system-i386 -cdrom pongos.iso -m 256M

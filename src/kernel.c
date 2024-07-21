@@ -1,4 +1,5 @@
-#include "terminal.h"
+#include <stdbool.h>
+#include "drivers/driver_headers.h"
 #include "hal.h"
 #include "irq.h"
 
@@ -10,20 +11,17 @@
 #error "not using x86 compiler??"
 #endif
 
-void timer(registers* regs)
+void register_interrupts()
 {
-	// timer IRQ
+	irq_register_handler(0,timer_handle);
+	irq_register_handler(1,keyboard_handle);
 }
 
 void kernel_main(void) 
 {
 	splash_screen();
 	init_hal();
-	irq_register_handler(0,timer);
-	irq_register_handler(1,keyboard_handle);
-	
+	register_interrupts();	
 	// busy loop
-	while(true){
-		
-	}
+	while(true){}
 }
