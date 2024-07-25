@@ -12,8 +12,8 @@ void irq_handler_func(registers* regs)
 {
     uint8_t irq = regs->interrupt - PIC_OFFSET;
 
-    uint8_t pic_isr = pic_read_serv_reg();
-    uint8_t pic_irr = pic_read_req_reg();
+    // uint8_t pic_isr = pic_read_serv_reg();
+    // uint8_t pic_irr = pic_read_req_reg();
 
     if(irq_handlers[irq] != NULL)
         irq_handlers[irq](regs);

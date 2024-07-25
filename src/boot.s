@@ -26,7 +26,8 @@ stack_top:
 .type _start, @function
 _start:
 	mov $stack_top, %esp
-
+	pushl %eax # magic value
+	pushl %ebx # pointer to mbt info
 	# identity mapped first 4MB of RAM
 	# set first pde
 	mov $page_table, %eax
@@ -51,14 +52,6 @@ _start:
 		jmp page_setup_start
 	page_setup_end:
 
-/*	mov $0x1235, %eax
-    mov %eax, 0x500
-	VGA_PRINT_HEX_4 0x500
-	/*# map page 0 to 0x1000
-	mov page_table, %eax
-    or $0x00001000, %eax
-    mov %eax, page_table*/
-
 	# enable paging
 	mov $page_directory, %eax
 	mov %eax, %cr3
@@ -66,16 +59,6 @@ _start:
 	
 	# setup GDT and jump to protected mode
 	PROTECTED_MODE
-
-	/*mov $0x6666, %eax
-	mov %eax, 0
-	VGA_PRINT_HEX_4 0x0
-	# disable paging
-	mov %cr0, %eax
-    and $0x7FFFFFFF, %eax
-    mov  %eax, %cr0
-	VGA_PRINT_HEX_4 0x0
-	VGA_PRINT_HEX_4 0x1000*/
 	
 	call kernel_main
 

@@ -34,3 +34,22 @@ Then, ISR are initialized mapped by setting flags, ISR function addresses, etc, 
 
 Links:
 - https://wiki.osdev.org/8259_PIC
+
+### Memory
+Need to use BIOS to detect memory map to figure out which physical memory addresses are available. Before booting into the kernel, the multiboot specification stores a pointer to the multiboot_info structure in %ebx. So we just need to push it on the stack before calling kernel_main. This can be retrieved as an argument to kernel_main. Then we can extract the memory maps from here. I just used the the structures from the multiboot.h file from GNU. You can also check it while booting using command mode: lsmmap
+
+| Base     | Length  | Base Decimal | Length Decimal | Status |
+| -------- | ------- | ------------ | -------------- | ------ |
+| 0        | 9fc00   | 0            | 654336         | avail  |
+| 9fc00    | 400     | 654336       | 1024           | res    |
+| f0000    | 10000   | 983040       | 65536          | res    |
+| 100000   | fee0000 | 1048576      | 267255808      | avail  |
+| ffe0000  | 20000   | 2.68E+08     | 131072         | res    |
+| fffc0000 | 40000   | 4.29E+09     | 262144         | res    |
+|          |         |              | 268369920      |        |
+
+
+
+Links:
+- https://wiki.osdev.org/Detecting_Memory_(x86)
+- https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Boot-information-format
