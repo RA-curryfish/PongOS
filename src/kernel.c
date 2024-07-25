@@ -27,7 +27,6 @@ void register_interrupts()
 void kernel_main(unsigned long* mbt, unsigned int magic) 
 {
 	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
-	splash_screen();
 	memory_info_t* mem_info;
 	mem_info->count = 0;
 	if (CHECK_FLAG (mbi->flags, 6)) {
@@ -40,11 +39,10 @@ void kernel_main(unsigned long* mbt, unsigned int magic)
 			mmap = (multiboot_memory_map_t *)((unsigned long)mmap+ mmap->size + sizeof(mmap->size));
 		}
 	}
-	printchar(mem_info->count+'0');
 	
 	init_hal();
 	register_interrupts();	
-	
+	splash_screen();
 	// busy loop
 	while(true){}
 }
