@@ -21,6 +21,8 @@ Some details of certain concepts
 
 ### Misc.
 - Remember to keep the kernel in some kind of a busy loop otherwise it will exit and you will spend a half a day trying to figure out why interrupts aren't working :)
+- 4kb = 0x1000, 64kb = 0x10000, 1mb = 0x100000, 4mb = 0x400000 
+
 
 ### Interrupts
 There are three categories:
