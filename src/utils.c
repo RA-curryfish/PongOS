@@ -46,14 +46,46 @@ void memcpy(void *dest, void *source, size_t len)
 	}
 }
 
+uint32_t bin_search(void* arr, uint8_t item_disp, uint32_t item, uint32_t low, uint32_t high, uint8_t elem_size, bool desc)
+{
+	uint32_t l = low, r = high;
+	uint32_t ans = high+1;
+	// change the base to item you're looking for
+	arr += item_disp;
+	while (l<=r) {
+		uint32_t m = l + (r-l)/2;
+
+		if(*(uint32_t*)(arr+m*elem_size) == item) return m;
+		
+		// todo: cleaner code here
+		if(!desc) {
+			if(*(uint32_t*)(arr+m*elem_size) > item) {
+				r = m-1;
+				ans = r; // best fit that is higher than searched item
+			} 
+			else l = m+1;
+		}
+		else {
+			if(*(uint32_t*)(arr+m*elem_size) < item) {
+				r = m-1;
+			} 
+			else {
+				l = m+1;
+				ans = l;
+			}
+		}
+	}
+	return ans;
+}
+
 // void printf(const char *format, ...)
 // {
 //   char **arg = (char **) &format;
 //   int c;
 //   char buf[20];
-
+//
 //   arg++;
-  
+// 
 //   while ((c = *format++) != 0)
 //     {
 //       if (c != '%')
@@ -62,20 +94,20 @@ void memcpy(void *dest, void *source, size_t len)
 //         {
 //           char *p, *p2;
 //           int pad0 = 0, pad = 0;
-          
+//   
 //           c = *format++;
 //           if (c == '0')
 //             {
 //               pad0 = 1;
 //               c = *format++;
 //             }
-
+//
 //           if (c >= '0' && c <= '9')
 //             {
 //               pad = c - '0';
 //               c = *format++;
 //             }
-
+//
 //           switch (c)
 //             {
 //             case 'd':
@@ -85,12 +117,12 @@ void memcpy(void *dest, void *source, size_t len)
 //               p = buf;
 //               goto string;
 //               break;
-
+//
 //             case 's':
 //               p = *arg++;
 //               if (! p)
 //                 p = "(null)";
-
+//
 //             string:
 //               for (p2 = p; *p2; p2++);
 //               for (; p2 < p + pad; p2++)
@@ -98,7 +130,7 @@ void memcpy(void *dest, void *source, size_t len)
 //               while (*p)
 //                 putchar (*p++);
 //               break;
-
+//
 //             default:
 //               putchar (*((int *) arg++));
 //               break;

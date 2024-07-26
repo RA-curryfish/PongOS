@@ -3,6 +3,7 @@
 #include "hal.h"
 #include "irq.h"
 #include "multiboot.h"
+#include "ph_mem_allocator.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -39,10 +40,16 @@ void kernel_main(unsigned long* mbt, unsigned int magic)
 			mmap = (multiboot_memory_map_t *)((unsigned long)mmap+ mmap->size + sizeof(mmap->size));
 		}
 	}
-	
 	init_hal();
 	register_interrupts();	
 	splash_screen();
+	
+	init_mem_region();
+	mem_range_t* r = allocate_mem(0x1000);
+	// if (r->start == 0) printchar('n');
+	// if (r->start == MEM_BASE_ADDR)// && r->end == (MEM_BASE_ADDR+0xFFF))
+	// 	printchar('x');
+	
 	// busy loop
 	while(true){}
 }

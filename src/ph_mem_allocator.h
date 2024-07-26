@@ -7,8 +7,14 @@
 #define MEM_END_ADDR 0x7FFFFF
 #define MAX_MEM_BLOCK_LAYER 11
 
+typedef struct mem_range {
+    uint32_t start;
+    uint32_t end;
+}mem_range_t;
+
 typedef struct mem_block_node {
     uint8_t layer; // don't really need this
+    mem_range_t range;
     bool used;
 }mem_block_node_t;
 
@@ -27,5 +33,4 @@ typedef struct mem_block_node {
 */ 
 
 void init_mem_region();
-uint32_t* find_free_block(uint32_t size);
-uint32_t* allocate_mem();
+mem_range_t* allocate_mem(uint32_t size);

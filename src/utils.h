@@ -10,3 +10,14 @@ size_t strlen(const char *s);
 bool strcmp(const char *s1, const char *s2);
 bool strcmp_cmd(const char *user_cmd, const char *cmd);
 void memcpy(void *dest, void *source, size_t len);
+/*  binary search on structures
+    Params:
+    arr - array of sorted structs
+    item_disp - Displacement of item from base of the struct
+    item - item to search
+    low - left limit
+    high - right limit
+    elem_size - size of each structure element
+    desc - wheter arr sorted in asc or desc
+*/
+uint32_t bin_search(void* arr, uint8_t item_disp, uint32_t item, uint32_t low, uint32_t high, uint8_t elem_size, bool desc);
