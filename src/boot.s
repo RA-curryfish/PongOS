@@ -26,8 +26,7 @@ stack_top:
 .type _start, @function
 _start:
 	mov $stack_top, %esp
-	pushl %eax # magic value
-	pushl %ebx # pointer to mbt info
+	pushl %ebx # pointer to multiboot info
 	# identity mapped first 4MB of RAM
 	# set first pde
 	mov $page_table, %eax

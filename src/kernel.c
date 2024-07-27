@@ -25,11 +25,8 @@ void register_interrupts()
 	irq_register_handler(1,keyboard_handle);
 }
 
-void kernel_main(unsigned long* mbt, unsigned int magic) 
+void load_mem_info(memory_info_t* mem_info, multiboot_info_t* mbi)
 {
-	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
-	memory_info_t* mem_info;
-	mem_info->count = 0;
 	if (CHECK_FLAG (mbi->flags, 6)) {
 		multiboot_memory_map_t *mmap = (multiboot_memory_map_t*)mbi->mmap_addr;
 		for (;(unsigned long)mmap < (mbi->mmap_addr+mbi->mmap_length);mem_info->count++) {
@@ -40,16 +37,23 @@ void kernel_main(unsigned long* mbt, unsigned int magic)
 			mmap = (multiboot_memory_map_t *)((unsigned long)mmap+ mmap->size + sizeof(mmap->size));
 		}
 	}
-	init_hal();
+}
+
+void kernel_main(unsigned long* mbt) 
+{
+	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
+	memory_info_t* mem_info;
+	mem_info->count = 0;
+	load_mem_info(mem_info,mbi);
+	
+	init_hal(); // pass memory bounds for phy mem
 	register_interrupts();	
 	splash_screen();
 	
-	init_mem_region();
 	mem_range_t* r = allocate_mem(0x1000);
-	// if (r->start == 0) printchar('n');
-	// if (r->start == MEM_BASE_ADDR)// && r->end == (MEM_BASE_ADDR+0xFFF))
-	// 	printchar('x');
-	
+	if (r->end == MEM_END_ADDR) printstr("success\n");
+	if(free_mem(r)) printstr("success 2\n");
+
 	// busy loop
 	while(true){}
 }

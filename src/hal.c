@@ -2,6 +2,7 @@
 #include "idt.h"
 #include "isr.h"
 #include "irq.h"
+#include "ph_mem_allocator.h"
 
 void init_hal()
 {
@@ -16,4 +17,7 @@ void init_hal()
     // Initialize PIC -> register 16 ISRs (32-47) with IRQ handler
     // -> enable interrupts
     irq_initialize();
+
+    // Initialize Physical memory
+    ph_mem_initialize();
 }

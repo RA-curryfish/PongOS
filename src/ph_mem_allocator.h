@@ -5,7 +5,7 @@
 // ~ 4MB of memory between 4MB-8MB
 #define MEM_BASE_ADDR 0x400000
 #define MEM_END_ADDR 0x7FFFFF
-#define MAX_MEM_BLOCK_LAYER 11
+#define MAX_MEM_BLOCK_LAYER 10
 
 typedef struct mem_range {
     uint32_t start;
@@ -32,5 +32,6 @@ typedef struct mem_block_node {
 10 - 4kB
 */ 
 
-void init_mem_region();
+void ph_mem_initialize();
 mem_range_t* allocate_mem(uint32_t size);
+bool free_mem(mem_range_t* range);

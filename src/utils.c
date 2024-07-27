@@ -48,6 +48,7 @@ void memcpy(void *dest, void *source, size_t len)
 
 uint32_t bin_search(void* arr, uint8_t item_disp, uint32_t item, uint32_t low, uint32_t high, uint8_t elem_size, bool desc)
 {
+	// todo: fix this returning 2047???
 	uint32_t l = low, r = high;
 	uint32_t ans = high+1;
 	// change the base to item you're looking for
