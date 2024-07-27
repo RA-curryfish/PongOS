@@ -50,7 +50,27 @@ Need to use BIOS to detect memory map to figure out which physical memory addres
 | fffc0000 | 40000   | 4.29E+09     | 262144         | res    |
 |          |         |              | 268369920      |        |
 
+Using buddy allocation, There are 11 layers with the biggest having 4MB block and the smallest, a 4KB block. The layout is the following:
 
+| Hex addr | 400000      | 480000 | 500000 | 580000 | 600000 | 680000 | 700000 | 780000 |
+| -------- | ----------- | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 0        | 4MB         |        |        |        |        |        |        |        |
+| 1        | 2MB         |        |        |        |   2MB  |        |        |        |
+| 2        | 1MB         |        | 1MB    |        |   1MB  |        |    1MB |        |
+| 3        | 512KB       | 512KB  | 512KB  | 512KB  | 512KB  | 512KB  | 512KB  | 512KB  |
+| 4        |             |        |        |        |        |        |        |        |
+| 5        |             |        |        |        |        |        |        |        |
+| 6        |             |        |        |        |        |        |        |        |
+| 7        |             |        |        |        |        |        |        |        |
+| 8        |             |        |        |        |        |        |        |        |
+| 9        |             |        |        |        |        |        |        |        |
+| 10       | 4kb,4kb…... |        |        |        |        |        |        |
+
+With the array to represent the system as follows:
+
+| Array | 4MB | 2MB | 2MB | 1MB | 1MB | 1MB | 1MB |     | 4KB  |
+| ----- | --- | --- | --- | --- | --- | --- | --- | --- | ---- |
+| idx   | 0   | 1   | 2   | 3   | 4   | 5   | 6   | ….. | 2046 |
 
 Links:
 - https://wiki.osdev.org/Detecting_Memory_(x86)
