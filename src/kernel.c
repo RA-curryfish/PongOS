@@ -19,10 +19,16 @@ typedef struct memory_info {
 	multiboot_memory_map_t regions[16];
 } memory_info_t;
 
+void pg_fault()
+{
+	printstr("PAGE FULT");
+}
+
 void register_interrupts()
 {
 	irq_register_handler(0,timer_handle);
 	irq_register_handler(1,keyboard_handle);
+	isr_register_handler(0x0E,pg_fault);
 }
 
 void load_mem_info(memory_info_t* mem_info, multiboot_info_t* mbi)
@@ -49,10 +55,14 @@ void kernel_main(unsigned long* mbt)
 	init_hal(); // pass memory bounds for phy mem
 	register_interrupts();	
 	splash_screen();
+	uintptr_t* ptr = ph_malloc();
+	if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");
+	// 001 000 000 --> 4MB
+	uintptr_t* ptr2 = 0x400000;
+	printchar(*(char*)ptr2);
+	// printchar(*(char*)ptr);
 	
-	mem_range_t* r = allocate_mem(0x1000);
-	if (r->end == MEM_END_ADDR) printstr("success\n");
-	if(free_mem(r)) printstr("success 2\n");
+	// ph_free(ptr);
 
 	// busy loop
 	while(true){}
