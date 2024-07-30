@@ -45,10 +45,12 @@ Need to use BIOS to detect memory map to figure out which physical memory addres
 | 0        | 9fc00   | 0            | 654336         | avail  |
 | 9fc00    | 400     | 654336       | 1024           | res    |
 | f0000    | 10000   | 983040       | 65536          | res    |
-| 100000   | fee0000 | 1048576      | 267255808      | avail  |
-| ffe0000  | 20000   | 2.68E+08     | 131072         | res    |
+| 100000   | 3ee0000 | 1048576      | 65929216       | avail  |
+| 3fe0000  | 20000   | 66977792     | 131072         | res    |
 | fffc0000 | 40000   | 4.29E+09     | 262144         | res    |
-|          |         |              | 268369920      |        |
+|          |         |              | 67043328       |        |
+
+(switched to using a simple bitmap for now)
 
 Using buddy allocation, There are 11 layers with the biggest having 4MB block and the smallest, a 4KB block. The layout is the following:
 

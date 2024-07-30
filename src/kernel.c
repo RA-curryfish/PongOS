@@ -22,6 +22,14 @@ typedef struct memory_info {
 void pg_fault()
 {
 	printstr("PAGE FULT");
+	// handle adding page to the page table etc here
+	// uintptr_t* ptr = ph_malloc();
+	// if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");
+	// // 001 000 000 --> 4MB
+	// printchar(*(char*)ptr);
+	
+	// ph_free(ptr);
+
 }
 
 void register_interrupts()
@@ -55,14 +63,6 @@ void kernel_main(unsigned long* mbt)
 	init_hal(); // pass memory bounds for phy mem
 	register_interrupts();	
 	splash_screen();
-	uintptr_t* ptr = ph_malloc();
-	if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");
-	// 001 000 000 --> 4MB
-	uintptr_t* ptr2 = 0x400000;
-	printchar(*(char*)ptr2);
-	// printchar(*(char*)ptr);
-	
-	// ph_free(ptr);
 
 	// busy loop
 	while(true){}

@@ -36,22 +36,6 @@ _start:
 	mov $0x400, %eax
 	SETUP_PT <$app_page_table>
 
-	mov $0x400000, %eax
-	movb $0x42, (%eax)
-
-	mov $page_directory, %eax
-	VGA_PRINT_HEX_4 <%eax>
-	VGA_PRINT_HEX_4 <(%eax)>
-	VGA_PRINT_HEX_4 <4(%eax)>
-	
-	mov $page_table, %eax
-	VGA_PRINT_HEX_4 <%eax>
-	VGA_PRINT_HEX_4 <(%eax)>
-
-	mov $app_page_table, %eax
-	VGA_PRINT_HEX_4 <%eax>
-	VGA_PRINT_HEX_4 <(%eax)>
-
 	# enable paging
 	mov $page_directory, %eax
 	mov %eax, %cr3
@@ -59,9 +43,6 @@ _start:
 	
 	# setup GDT and jump to protected mode
 	PROTECTED_MODE
-
-	mov $0b00000000010000000000000000000000, %eax
-	VGA_PRINT_HEX_4 <(%eax)>
 	
 	call kernel_main
 
