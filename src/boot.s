@@ -28,55 +28,16 @@ stack_top:
 _start:
 	mov $stack_top, %esp
 	pushl %ebx # pointer to multiboot info
-	# identity mapped first 4MB of RAM
-	# set first pde
-	mov $page_table, %eax
-    and $0xF000, %ax
-    mov %eax, page_directory
-    mov $0b00100111, %al
-    mov %al, page_directory
-
-	# set 1024 ptes
-	mov $0, %eax
-    mov $page_table, %ebx
-	page_setup_start:
-		cmp $0x400, %eax
-		je page_setup_end
-		mov %eax, %edx
-		shl $12, %edx
-		mov $0b00000011, %dl
-		and $0xF0, %dh
-		mov %edx, (%ebx)
-		inc %eax
-		add $4, %ebx
-		jmp page_setup_start
-	page_setup_end:
 	
-	mov $page_directory, %ebx
-	mov $app_page_table, %eax
-	and $0xF000, %ax
-	mov %eax, 4(%ebx)
-	mov $0b00100111, %al
-	mov %al, 4(%ebx)
-	
+	# Set up PD and PTs
+	SETUP_PD
 	mov $0, %eax
-	mov $app_page_table, %ebx
-	page_setup_start1:
-		cmp $0x400, %eax
-		je page_setup_end1
-		mov %eax, %edx
-		add $0x400, %edx
-		shl $12, %edx
-		mov $0b00000011, %dl
-		and $0xF0, %dh
-		mov %edx, (%ebx)
-		inc %eax
-		add $4, %ebx
-		jmp page_setup_start1
-	page_setup_end1:
+	SETUP_PT <$page_table>
+	mov $0x400, %eax
+	SETUP_PT <$app_page_table>
 
 	mov $0x400000, %eax
-	movb $0x41, (%eax)
+	movb $0x42, (%eax)
 
 	mov $page_directory, %eax
 	VGA_PRINT_HEX_4 <%eax>

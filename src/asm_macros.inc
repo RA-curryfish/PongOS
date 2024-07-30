@@ -132,3 +132,48 @@
     or $0x80000000, %eax
     mov %eax, %cr0
 .endm
+
+.macro SETUP_PD
+    mov $page_directory, %ebx
+    
+	# first PT identity mapped 0-4MB
+    mov $page_table, %eax
+    and $0xF000, %ax
+    mov %eax, (%ebx)
+    mov $0b00100111, %al
+    mov %al, (%ebx)
+
+    # second PT mapped 4MB-8MB
+	mov $app_page_table, %eax
+	and $0xF000, %ax
+	mov %eax, 4(%ebx)
+	mov $0b00100111, %al
+	mov %al, 4(%ebx)
+
+    # PD mapped to itself
+    mov %ebx, %eax
+    and $0xF000, %ax
+    mov %eax, 4092(%ebx)
+    mov $0b00100111, %al
+    mov %al, 4092(%ebx)
+.endm
+
+.macro SETUP_PT pt
+    # set 1024 ptes
+	LOCAL page_setup_start, page_setup_end
+    mov $0, %ecx
+    mov \pt, %ebx
+	page_setup_start:
+		cmp $0x400, %ecx
+		je page_setup_end
+		mov %eax, %edx
+		shl $12, %edx
+		mov $0b00000011, %dl
+		and $0xF0, %dh
+		mov %edx, (%ebx)
+		inc %ecx
+        inc %eax
+		add $4, %ebx
+		jmp page_setup_start
+	page_setup_end:
+.endm
