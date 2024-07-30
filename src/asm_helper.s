@@ -37,12 +37,11 @@ disable_interrupts:
     cli
     ret
 
-.global switch_tasks:
+.global switch_tasks
+switch_tasks:
     # eax,ecx,edx must be caller saved
     # eip is saved by 'call' inst
     push %ebx
     push %esi
     push %edi
     push %ebp
-
-    

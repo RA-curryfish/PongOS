@@ -1,7 +1,7 @@
 #include "isr.h"
 #include "idt.h"
 #include <stddef.h>
-#include "drivers/terminal.h"
+#include "../drivers/terminal.h"
 
 isr_handler isr_handlers[256];
 

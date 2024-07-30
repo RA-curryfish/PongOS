@@ -1,5 +1,5 @@
 #include "pic.h"
-#include "asm_helper.h"
+#include "../asm_helper.h"
 
 #define PIC1_COMMAND_PORT 0x20
 #define PIC2_COMMAND_PORT 0xA0

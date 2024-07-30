@@ -30,6 +30,7 @@ grub-mkrescue -o pongos.iso isodir
 # clean object files in cur dir
 rm *.o
 rm drivers/*.o
+rm x86/*.o
 
 # run it bruhh. Default is 128M. Anything <= 2M will not be able to boot
-qemu-system-i386 -cdrom pongos.iso -m 64M
+qemu-system-i386 -cdrom pongos.iso -fda ./bin/tst.img -m 64M

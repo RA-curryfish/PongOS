@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include "drivers/driver_headers.h"
-#include "hal.h"
-#include "irq.h"
-#include "multiboot.h"
+#include "x86/hal.h"
+#include "x86/irq.h"
+#include "boot/multiboot.h"
 #include "ph_mem_allocator.h"
 
 #ifdef __linux__
@@ -51,6 +51,12 @@ void load_mem_info(memory_info_t* mem_info, multiboot_info_t* mbi)
 			mmap = (multiboot_memory_map_t *)((unsigned long)mmap+ mmap->size + sizeof(mmap->size));
 		}
 	}
+}
+
+void load_binary()
+{
+	unsigned char* buf = ""; // read this buffer from a file in the HDD/Floppy?
+	
 }
 
 void kernel_main(unsigned long* mbt) 

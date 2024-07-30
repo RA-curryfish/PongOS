@@ -20,7 +20,7 @@ ISR\c:
 
 .section .text
 # Include all ISRs which expand into functions by the above macros
-.include "isrs_gen.inc"
+.include "x86/isrs_gen.inc"
 
 # Common part of the ISR
 isr_common:

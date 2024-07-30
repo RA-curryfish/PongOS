@@ -2,7 +2,7 @@
 #include "idt.h"
 #include "isr.h"
 #include "irq.h"
-#include "ph_mem_allocator.h"
+#include "../ph_mem_allocator.h"
 
 void init_hal()
 {
