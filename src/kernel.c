@@ -1,7 +1,9 @@
 #include <stdbool.h>
 #include "x86/hal.h"
 #include "boot/multiboot.h"
-#include "ph_mem_allocator.h"
+// #include "ph_mem_allocator.h"
+#include "drivers/floppy.h"
+#include "drivers/terminal.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -33,8 +35,7 @@ void load_mem_info(memory_info_t* mem_info, multiboot_info_t* mbi)
 
 void load_binary()
 {
-	unsigned char* buf = ""; // read this buffer from a file in the HDD/Floppy?
-	
+	// unsigned char* buf = ""; // read this buffer from a file in the HDD/Floppy?
 }
 
 void kernel_main(unsigned long* mbt) 
@@ -45,8 +46,10 @@ void kernel_main(unsigned long* mbt)
 	load_mem_info(mem_info,mbi);
 	
 	init_hal(); // pass memory bounds for phy mem
-	register_interrupts();	
-	splash_screen();
+	// splash_screen();
+
+	char buf[512]; buf[0] = '\0';
+	floppy_read(buf,0);
 
 	// busy loop
 	while(true){}

@@ -42,6 +42,12 @@ void init_hal()
 
     register_interrupts();
 
+	terminal_initialize();
+
     // Initialize Physical memory
     ph_mem_initialize();
+
+    // init floppy driver
+    floppy_init();
+
 }

@@ -214,7 +214,6 @@ void splash_screen()
 	/* Initialize terminal interface */
 	disable_cursor();
 	clear_terminal();
-	terminal_initialize();
 	printstr("\n\n\n\n\n\n\n\n\n\n");
 	printstr("\t\t*****************************************\n");
 	printstr("\t\t*\t\tPong OS\t\t*\n");

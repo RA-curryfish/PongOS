@@ -100,7 +100,7 @@ uintptr_t* ph_malloc()
 
 void ph_free(uintptr_t* ptr)
 {
-    uint16_t frame_num = (uint16_t)(ptr-(uint16_t)MEM_BASE_ADDR)/FRAME_SIZE;
+    uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
     uint16_t idx = frame_num/8;
     frame_num = frame_num%8;
     mem_bitmap[idx] = mem_bitmap[idx] & ~(1<<frame_num);

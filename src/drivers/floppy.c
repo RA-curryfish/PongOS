@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include "../drivers/terminal.h"
 #define SECTORS_PER_TRACK 18
+#define RQM 0x80
+#define NDMA 0x20
 #define MT 0x80 // multi track mode
 #define MFM 0x40 // magnetic shenannigan
 
@@ -53,20 +55,21 @@ typedef struct chs {
     uint8_t sector;
 }chs_t;
 
-static volatile floppy_state=0;
+static volatile uint8_t floppy_state=0;
+static volatile bool floppy_irq_done = false;
 
 void floppy_motor(bool switch_on)
 {
     if(switch_on) {
         if(floppy_state==0) {
-            outb(DIGITAL_OUTPUT_REGISTER, 0x1c);
+            outb(DIGITAL_OUTPUT_REGISTER, 0x1c); //0b00011100 clear IRQ/DMA bit??
             for(uint16_t i=0; i<10000; i++) iowait();
         }
         floppy_state=1;
     }
     else {
-        if(floppy_state=1) {
-            outb(DIGITAL_OUTPUT_REGISTER, 0xc);
+        if(floppy_state==1) {
+            outb(DIGITAL_OUTPUT_REGISTER, 0xc); // here too
             for(uint16_t i=0; i<10000; i++) iowait();
         }
         floppy_state=0;
@@ -77,8 +80,8 @@ void floppy_wait(uint8_t bit, bool set)
 {
     while(true) {
         uint8_t msr = inb(MAIN_STATUS_REGISTER);
-        if(set) if(bit & msr) return; // bit should be 1 
-        else if(!(bit & msr)) return; // bit should be 0
+        if(set) {if(bit & msr) return;} // bit should be 1 
+        else {if(!(bit & msr)) return;} // bit should be 0
     }
 }
 
@@ -91,27 +94,64 @@ void lba_to_chs(uint32_t lba, chs_t* chs)
 
 void floppy_send_cmd(enum data_cmd cmd, enum floppy_regs reg) 
 { 
-    floppy_wait(1<<7, true);
-    outb(reg, cmd); 
+    floppy_wait(RQM, true);
+    outb(reg, cmd);
+    floppy_wait(RQM, true);
 } 
 
 uint8_t floppy_read_result(enum floppy_regs reg)
 {
-    floppy_wait(1<<7, true);
+    floppy_wait(RQM, true);
     return inb(reg);
+    floppy_wait(RQM, true);
 }
 
 void floppy_irq()
 {
     printchar('y');
+    printchar('\n');
+    floppy_irq_done=true;
+}
+
+void floppy_irq_wait()
+{
+    while(!floppy_irq_done);
+    floppy_irq_done=false;
+}
+
+void floppy_reset()
+{
+    floppy_send_cmd(0, DIGITAL_OUTPUT_REGISTER);
+    floppy_send_cmd(0xc, DIGITAL_OUTPUT_REGISTER);
+}
+
+void floppy_configure()
+{
+    floppy_send_cmd(CMD_CONFIGURE, DATA_FIFO);
+    floppy_send_cmd(0, DATA_FIFO);
+    floppy_send_cmd((1<<6|0<<5|1<<4|0b1000), DATA_FIFO); //imp seek, !fifo_disable, polling_mode_disable, threshold 
+    floppy_send_cmd(0, DATA_FIFO);
+    // no result, no irq
 }
 
 void floppy_init()
 {   
-    // enable perpendicular mode
-    floppy_send_cmd(CMD_PERPENDICULAR_MODE, DATA_FIFO);
-    floppy_send_cmd(1<<2, DATA_FIFO); // drive 0 enable
-    floppy_send_cmd(0x03, DATARATE_SELECT_REGISTER); // use 2.88M floppy
+    printstr("f Init\n");
+    floppy_reset();
+    printstr("rst done\n");
+    floppy_configure();
+    printstr("conf done\n");
+
+    // specify command
+    floppy_send_cmd(0,CONFIGURATION_CONTROL_REGISTER); // set datarate
+    floppy_send_cmd(CMD_SET_PARAM, DATA_FIFO);
+    floppy_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
+    floppy_send_cmd(0x3, DATA_FIFO); // load time, disable DMA
+    printstr("specify done\n");
+
+    // lock settings
+    floppy_send_cmd(CMD_LOCK, DATA_FIFO);
+    printstr("f Init end\n");
 }
 
 void floppy_seek(uint8_t cyl)
@@ -134,25 +174,41 @@ void floppy_seek(uint8_t cyl)
     floppy_motor(false); //turn off motor
 }
 
-void floppy_read(void* buf, uint32_t lba, uint32_t sz)
+void floppy_read(char* buf, uint32_t lba)
 {    
     // need to add retries
     // seek stuff 
     chs_t chs;
     lba_to_chs(lba, &chs);
-    floppy_seek(chs.cyl);
+    printchar(chs.cyl+'0');
+    printchar(chs.head+'0');
+    printchar(chs.sector+'0');
+    // floppy_seek(chs.cyl); // needed??
     
+    printstr("f read\n");
+
     // issue std r/w data cmd
     floppy_send_cmd(CMD_READ_DATA|MT|MFM,DATA_FIFO);
-    floppy_send_cmd((0<<2)|0, DATA_FIFO); // head num, drive num
+    floppy_send_cmd((chs.head<<2)|0, DATA_FIFO); // head num, drive num
     floppy_send_cmd(chs.cyl, DATA_FIFO); //cyl
-    floppy_send_cmd(0, DATA_FIFO); //head
+    floppy_send_cmd(chs.head, DATA_FIFO); //head
     floppy_send_cmd(chs.sector, DATA_FIFO); // count starts from 1
-    floppy_send_cmd(2, DATA_FIFO);
+    floppy_send_cmd(0x2, DATA_FIFO); //512bytes per sector
     floppy_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
     floppy_send_cmd(0x1B, DATA_FIFO); //GAP size
     floppy_send_cmd(0xFF, DATA_FIFO);
-    floppy_wait(1<<7, true);
+    floppy_wait(RQM, true);
+    floppy_wait(NDMA, false);
+
+    for(uint16_t i=0; i<512;i++)
+    {
+        buf[i] = floppy_read_result(DATA_FIFO);
+        // if(buf[i] == '\0') {
+        //     printstr("data over\n");
+        //     break;
+        // }
+        printchar(buf[i]);
+    }
 
     // status, ending chs, bytes per sec vals
     uint8_t st0,st1,st2, cyl_r, hd_r, sec_r, bps;
@@ -164,4 +220,72 @@ void floppy_read(void* buf, uint32_t lba, uint32_t sz)
     hd_r = floppy_read_result(DATA_FIFO);
     sec_r = floppy_read_result(DATA_FIFO);
     bps = floppy_read_result(DATA_FIFO); // should be 2??
+
+    int error = 0; 
+
+        if(st0 & 0xC0) { 
+            static const char * status[] = 
+            { 0, "error", "invalid command", "drive not ready" };
+            printstr("floppy_do_sector: status = ");
+            printstr(status[st0>>6]);
+            error = 1; 
+        } 
+        if(st1 & 0x80) { 
+            printstr("floppy_do_sector: end of cylinder\n"); 
+            error = 1; 
+        } 
+        if(st0 & 0x08) { 
+            printstr("floppy_do_sector: drive not ready\n"); 
+            error = 1; 
+        } 
+        if(st1 & 0x20) { 
+            printstr("floppy_do_sector: CRC error\n"); 
+            error = 1; 
+        } 
+        if(st1 & 0x10) { 
+            printstr("floppy_do_sector: controller timeout\n"); 
+            error = 1; 
+        } 
+        if(st1 & 0x04) { 
+            printstr("floppy_do_sector: no data found\n"); 
+            error = 1; 
+        } 
+        if((st1|st2) & 0x01) { 
+            printstr("floppy_do_sector: no address mark found\n"); 
+            error = 1; 
+        } 
+        if(st2 & 0x40) { 
+            printstr("floppy_do_sector: deleted address mark\n"); 
+            error = 1; 
+        } 
+        if(st2 & 0x20) { 
+            printstr("floppy_do_sector: CRC error in data\n"); 
+            error = 1; 
+        } 
+        if(st2 & 0x10) { 
+            printstr("floppy_do_sector: wrong cylinder\n"); 
+            error = 1; 
+        } 
+        if(st2 & 0x04) { 
+            printstr("floppy_do_sector: uPD765 sector not found\n"); 
+            error = 1; 
+        } 
+        if(st2 & 0x02) { 
+            printstr("floppy_do_sector: bad cylinder\n"); 
+            error = 1; 
+        } 
+        if(bps != 0x2) { 
+            printstr("floppy_do_sector: wanted 512B/sector, got ");
+            printchar(bps+'0');
+            error = 1; 
+        } 
+        if(st1 & 0x02) { 
+            printstr("floppy_do_sector: not writable\n"); 
+            error = 2; 
+        } 
 }
+
+// void floppy_write(char* buf, uint32_t dev_loc, uint32_t sz)
+// {
+
+// }
