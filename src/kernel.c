@@ -1,7 +1,5 @@
 #include <stdbool.h>
-#include "drivers/driver_headers.h"
 #include "x86/hal.h"
-#include "x86/irq.h"
 #include "boot/multiboot.h"
 #include "ph_mem_allocator.h"
 
@@ -18,26 +16,6 @@ typedef struct memory_info {
 	uint8_t count;
 	multiboot_memory_map_t regions[16];
 } memory_info_t;
-
-void pg_fault()
-{
-	printstr("PAGE FULT");
-	// handle adding page to the page table etc here
-	// uintptr_t* ptr = ph_malloc();
-	// if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");
-	// // 001 000 000 --> 4MB
-	// printchar(*(char*)ptr);
-	
-	// ph_free(ptr);
-
-}
-
-void register_interrupts()
-{
-	irq_register_handler(0,timer_handle);
-	irq_register_handler(1,keyboard_handle);
-	isr_register_handler(0x0E,pg_fault);
-}
 
 void load_mem_info(memory_info_t* mem_info, multiboot_info_t* mbi)
 {

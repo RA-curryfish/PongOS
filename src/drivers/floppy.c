@@ -1,4 +1,6 @@
 #include "floppy.h"
+#include "../asm_helper.h"
+#include <stdbool.h>
 #define SECTORS_PER_TRACK 18
 
 enum floppy_regs
@@ -7,7 +9,7 @@ enum floppy_regs
    STATUS_REGISTER_B                = 0x3F1, // read-only
    DIGITAL_OUTPUT_REGISTER          = 0x3F2,
    TAPE_DRIVE_REGISTER              = 0x3F3,
-   MAIN_STATUS_REGISTER             = 0x3F4, // read-only
+   MAIN_STATUS_REGISTER             = 0x3F4, // read-only, check busy bitflag b4 r/w
    DATARATE_SELECT_REGISTER         = 0x3F4, // write-only
    DATA_FIFO                        = 0x3F5,
    DIGITAL_INPUT_REGISTER           = 0x3F7, // read-only
@@ -48,6 +50,34 @@ typedef struct chs {
     uint8_t sector;
 }chs_t;
 
+static volatile floppy_state=0;
+
+void floppy_motor(bool switch_on)
+{
+    if(switch_on) {
+        if(floppy_state==0) {
+            outb(DIGITAL_OUTPUT_REGISTER, 0x1c);
+            for(uint16_t i=0; i<10000; i++) iowait();
+        }
+        floppy_state=1;
+    }
+    else {
+        if(floppy_state=1) {
+            outb(DIGITAL_OUTPUT_REGISTER, 0xc);
+            for(uint16_t i=0; i<10000; i++) iowait();
+        }
+        floppy_state=0;
+    }
+}
+
+void floppy_wait()
+{
+    while(true) {
+        uint8_t msr = inb(MAIN_STATUS_REGISTER);
+        if(0b10000000 & msr) return;
+    }
+}
+
 void lba_to_chs(uint32_t lba, chs_t* chs)
 {
     chs->cyl    = lba / (2 * SECTORS_PER_TRACK);
@@ -55,58 +85,41 @@ void lba_to_chs(uint32_t lba, chs_t* chs)
     chs->sector = ((lba % (2 * SECTORS_PER_TRACK)) % SECTORS_PER_TRACK + 1);
 }
 
-// uint8_t floppy_init()
-// {
-//     int flp_cmos;
+void floppy_cmd(enum data_cmd cmd, enum floppy_regs reg) 
+{ 
+    floppy_wait();
+    outb(reg, cmd); 
+} 
 
-//     /* Before anything, validate the floppy controller */
-//     if (!flp_valid())
-//     {
-//         kernel_warning("No enchanted floppy controller detected. "
-//                        "Floppy initialization aborted.");
-//         return -1;
-//     }
+void floppy_init()
+{   
+    // turn on motor 0, enable IRQs?, set normal op
+    floppy_motor(true);
 
-//     /* Check the drive */
-//     flp_cmos = cmos_get_flp_status();
-//     if (!flp_cmos)
-//     {
-//         kernel_warning("No floppy drive detected");
-//         return -1;
-//     }
-    // else
-    // {
-    //     /* Determine the drive number */
-    //     if (CMOS_DISKETTE_TYPE_DRIVE0(flp_cmos) == CMOS_DISKETTE_1M44)
-    //     {
-    //         flp.drive_nr = 0;
-    //         flp.dor_select_reg = DOR_SEL_0;
-    //         flp.dor_motor_reg = DOR_MOTOR_0;
-    //         flp.msr_busy_bit = MSR_BUSY_0;
-    //     }
-    //     else if (CMOS_DISKETTE_TYPE_DRIVE1(flp_cmos) == CMOS_DISKETTE_1M44)
-    //     {
-    //         flp.drive_nr = 1;
-    //         flp.dor_select_reg = DOR_SEL_1;
-    //         flp.dor_motor_reg = DOR_MOTOR_1;
-    //         flp.msr_busy_bit = MSR_BUSY_1;
-    //     }
-    //     else
-    //     {
-    //         kernel_warning("No suitable floppy drive detected");
-    //         return -1;
-    //     }
-    // }
+    // enable perpendicular mode
+    floppy_cmd(CMD_PERPENDICULAR_MODE, DATA_FIFO);
+    floppy_cmd(1<<2, DATA_FIFO); // drive 0 enable
+    floppy_cmd(0x03, DATARATE_SELECT_REGISTER); // use 2.88M floppy
+}
 
-    // dma_struct_init(&flp.dma, 2);
-    // dma_reg_channel(&flp.dma, SECTORS_PER_TRACK * 512);
-    
-    // ctrl_disable();
-    // ctrl_enable();
-    // ctrl_reset();
-    // set_motor_on(WAIT_MOTOR_SPIN);
-    // flp_recalibrate();
-    // set_motor_off(NO_WAIT_MOTOR_SPIN);
+void floppy_seek()
+{
+    outb(DATA_FIFO, CMD_SEEK);
+}
 
-//     return 0;
-// }
+void floppy_read(void* buf, uint32_t dev_loc, uint32_t sz)
+{    
+    // seek stuff 
+    if(!floppy_state) floppy_motor(true);
+    floppy_seek();
+    chs_t chs;
+    lba_to_chs(dev_loc, &chs);
+
+
+    // issue sense interrupt cmd
+
+    // issue std r/w data cmd
+
+    // wait for IRQ6 to determine when controller wants data to be read
+    // or check RQM bit in MSR
+}

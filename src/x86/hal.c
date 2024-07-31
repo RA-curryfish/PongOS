@@ -2,7 +2,28 @@
 #include "idt.h"
 #include "isr.h"
 #include "irq.h"
+#include "../drivers/driver_headers.h"
 #include "../ph_mem_allocator.h"
+
+void pg_fault()
+{
+	printstr("PAGE FULT");
+	// handle adding page to the page table etc here
+	// uintptr_t* ptr = ph_malloc();
+	// if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");
+	// // 001 000 000 --> 4MB
+	// printchar(*(char*)ptr);
+	
+	// ph_free(ptr);
+
+}
+
+void register_interrupts()
+{
+	irq_register_handler(0,timer_handle);
+	irq_register_handler(1,keyboard_handle);
+	isr_register_handler(0x0E,pg_fault);
+}
 
 void init_hal()
 {
@@ -17,6 +38,8 @@ void init_hal()
     // Initialize PIC -> register 16 ISRs (32-47) with IRQ handler
     // -> enable interrupts
     irq_initialize();
+
+    register_interrupts();
 
     // Initialize Physical memory
     ph_mem_initialize();
