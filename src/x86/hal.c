@@ -22,6 +22,7 @@ void register_interrupts()
 {
 	irq_register_handler(0,timer_handle);
 	irq_register_handler(1,keyboard_handle);
+    irq_register_handler(6, floppy_irq);
 	isr_register_handler(0x0E,pg_fault);
 }
 

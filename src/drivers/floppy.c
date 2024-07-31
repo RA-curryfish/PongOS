@@ -1,7 +1,10 @@
 #include "floppy.h"
 #include "../asm_helper.h"
 #include <stdbool.h>
+#include "../drivers/terminal.h"
 #define SECTORS_PER_TRACK 18
+#define MT 0x80 // multi track mode
+#define MFM 0x40 // magnetic shenannigan
 
 enum floppy_regs
 {
@@ -70,11 +73,12 @@ void floppy_motor(bool switch_on)
     }
 }
 
-void floppy_wait()
+void floppy_wait(uint8_t bit, bool set)
 {
     while(true) {
         uint8_t msr = inb(MAIN_STATUS_REGISTER);
-        if(0b10000000 & msr) return;
+        if(set) if(bit & msr) return; // bit should be 1 
+        else if(!(bit & msr)) return; // bit should be 0
     }
 }
 
@@ -85,41 +89,78 @@ void lba_to_chs(uint32_t lba, chs_t* chs)
     chs->sector = ((lba % (2 * SECTORS_PER_TRACK)) % SECTORS_PER_TRACK + 1);
 }
 
-void floppy_cmd(enum data_cmd cmd, enum floppy_regs reg) 
+void floppy_send_cmd(enum data_cmd cmd, enum floppy_regs reg) 
 { 
-    floppy_wait();
+    floppy_wait(1<<7, true);
     outb(reg, cmd); 
 } 
 
+uint8_t floppy_read_result(enum floppy_regs reg)
+{
+    floppy_wait(1<<7, true);
+    return inb(reg);
+}
+
+void floppy_irq()
+{
+    printchar('y');
+}
+
 void floppy_init()
 {   
-    // turn on motor 0, enable IRQs?, set normal op
-    floppy_motor(true);
-
     // enable perpendicular mode
-    floppy_cmd(CMD_PERPENDICULAR_MODE, DATA_FIFO);
-    floppy_cmd(1<<2, DATA_FIFO); // drive 0 enable
-    floppy_cmd(0x03, DATARATE_SELECT_REGISTER); // use 2.88M floppy
+    floppy_send_cmd(CMD_PERPENDICULAR_MODE, DATA_FIFO);
+    floppy_send_cmd(1<<2, DATA_FIFO); // drive 0 enable
+    floppy_send_cmd(0x03, DATARATE_SELECT_REGISTER); // use 2.88M floppy
 }
 
-void floppy_seek()
+void floppy_seek(uint8_t cyl)
 {
-    outb(DATA_FIFO, CMD_SEEK);
+    if(!floppy_state) floppy_motor(true); // turn on motor if not already
+
+    floppy_send_cmd(CMD_SEEK, DATA_FIFO);
+    floppy_send_cmd(0<<2|0, DATA_FIFO); // head 0, drive 0
+    floppy_send_cmd(cyl, DATA_FIFO);
+    floppy_wait(1<<0, false); // check disk active bit to be unset?
+    
+    // send sense interrupt cmd
+    floppy_send_cmd(CMD_SENSE_INTERRUPT, DATA_FIFO);
+    do {
+        uint8_t st0 = floppy_read_result(DATA_FIFO);
+        uint8_t cylinder = floppy_read_result(DATA_FIFO);
+        if (cyl==cylinder) break;
+    } while (true); // should idealy not run more than ocne
+
+    floppy_motor(false); //turn off motor
 }
 
-void floppy_read(void* buf, uint32_t dev_loc, uint32_t sz)
+void floppy_read(void* buf, uint32_t lba, uint32_t sz)
 {    
+    // need to add retries
     // seek stuff 
-    if(!floppy_state) floppy_motor(true);
-    floppy_seek();
     chs_t chs;
-    lba_to_chs(dev_loc, &chs);
-
-
-    // issue sense interrupt cmd
-
+    lba_to_chs(lba, &chs);
+    floppy_seek(chs.cyl);
+    
     // issue std r/w data cmd
+    floppy_send_cmd(CMD_READ_DATA|MT|MFM,DATA_FIFO);
+    floppy_send_cmd((0<<2)|0, DATA_FIFO); // head num, drive num
+    floppy_send_cmd(chs.cyl, DATA_FIFO); //cyl
+    floppy_send_cmd(0, DATA_FIFO); //head
+    floppy_send_cmd(chs.sector, DATA_FIFO); // count starts from 1
+    floppy_send_cmd(2, DATA_FIFO);
+    floppy_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
+    floppy_send_cmd(0x1B, DATA_FIFO); //GAP size
+    floppy_send_cmd(0xFF, DATA_FIFO);
+    floppy_wait(1<<7, true);
 
-    // wait for IRQ6 to determine when controller wants data to be read
-    // or check RQM bit in MSR
-}
+    // status, ending chs, bytes per sec vals
+    uint8_t st0,st1,st2, cyl_r, hd_r, sec_r, bps;
+    st0 = floppy_read_result(DATA_FIFO);
+    st1 = floppy_read_result(DATA_FIFO);
+    st2 = floppy_read_result(DATA_FIFO);
+
+    cyl_r = floppy_read_result(DATA_FIFO);
+    hd_r = floppy_read_result(DATA_FIFO);
+    sec_r = floppy_read_result(DATA_FIFO);
+    bps = floppy_read_result(DATA_FIFO); // should be 2??
