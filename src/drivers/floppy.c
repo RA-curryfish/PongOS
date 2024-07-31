@@ -164,3 +164,4 @@ void floppy_read(void* buf, uint32_t lba, uint32_t sz)
     hd_r = floppy_read_result(DATA_FIFO);
     sec_r = floppy_read_result(DATA_FIFO);
     bps = floppy_read_result(DATA_FIFO); // should be 2??
+}
