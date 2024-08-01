@@ -50,7 +50,7 @@ void kernel_main(unsigned long* mbt)
 
 	char* buf; buf = 0x100000;
 	floppy_read(buf,0);
-	for(uint8_t i=0;i<200;i++) printchar(*(buf+i));
+	for(uint16_t i=0;i<1040;i++) printchar(*(buf+i));
 
 	// busy loop
 	while(true){}

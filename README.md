@@ -77,3 +77,12 @@ With the array to represent the system as follows:
 Links:
 - https://wiki.osdev.org/Detecting_Memory_(x86)
 - https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Boot-information-format
+
+### Floppy Controller
+Using DMA at ~1MB to transfer data. The floppy image needs to be in the right format (see the commands in the flopper.sh file). Documentation is a mess and confusing to figure out order of steps, timing, etc.
+no  further comments ;_;
+
+Links:
+- https://www.ardent-tool.com/floppy/Floppy_Programming.html
+- https://forum.osdev.org/viewtopic.php?t=13538
+- https://wiki.osdev.org/Floppy_Disk_Controller#st2
