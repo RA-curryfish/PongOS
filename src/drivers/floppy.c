@@ -59,9 +59,8 @@ static volatile uint8_t floppy_state=0;
 static volatile bool floppy_irq_done = false;
 
 #define DMA_LEN 0x4800
-// overwrites multiboot stuff
-// static const char floppy_dmabuf[DMA_LEN] __attribute__((aligned(0x8000)));
-static const char* floppy_dmabuf = 0x400000;
+// set DMA in a 1:1 mapped area :) (maybe 1MB-2MB) 
+static const char* floppy_dmabuf = 0x100000;
 void floppy_dma_init(bool rw)
 {
     union { 
@@ -217,17 +216,19 @@ void floppy_seek(chs_t chs)
     if(!floppy_state) floppy_motor(true); // turn on motor if not already
     printstr("f seek\n");
     floppy_irq_done=false;
+    printstr("0");
     floppy_send_cmd(CMD_SEEK, DATA_FIFO);
     floppy_send_cmd(chs.head<<2, DATA_FIFO); // head 0, drive 0
     floppy_send_cmd(chs.cyl, DATA_FIFO);
+    printstr("1");
     // floppy_irq_wait(); //??
+    // floppy_wait(1<<0, false); // check disk active bit to be unset?
     floppy_irq_done=false;
     
     // send sense interrupt
     uint8_t st0,cyl;
     floppy_fetch_res(&st0,&cyl);
-    floppy_wait(1<<0, false); // check disk active bit to be unset?
-
+    printstr("2");
     if(cyl==chs.cyl) {
         floppy_motor(false); //turn off motor
         printstr("seek end\n");
@@ -247,10 +248,10 @@ void floppy_read(char* buf, uint32_t lba)
     // seek stuff 
     chs_t chs;
     lba_to_chs(lba, &chs);
-    // floppy_seek(chs); // needed??
-    chs.head=1;
-    floppy_seek(chs);
-    chs.head=0;
+    floppy_seek(chs); // needed??
+    // chs.head=1;
+    // floppy_seek(chs);
+    // chs.head=0;
     
     floppy_motor(true);
     floppy_dma_init(0);
@@ -259,6 +260,7 @@ void floppy_read(char* buf, uint32_t lba)
     for(uint8_t i=0;i<250;i++) iowait();
 
     // issue std r/w data cmd
+    floppy_irq_done=false;
     floppy_send_cmd(CMD_READ_DATA|MT|MFM, DATA_FIFO);
     floppy_send_cmd((chs.head<<2)|0, DATA_FIFO); // head num, drive num
     floppy_send_cmd(chs.cyl, DATA_FIFO); //cyl
@@ -268,21 +270,10 @@ void floppy_read(char* buf, uint32_t lba)
     floppy_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
     floppy_send_cmd(0x1B, DATA_FIFO); //GAP size
     floppy_send_cmd(0xFF, DATA_FIFO);
-    floppy_irq_done=false;
     floppy_irq_wait();
     floppy_irq_done=false;
-    floppy_wait(RQM, true);
-    // floppy_wait(NDMA, false);
-
-    // for(uint16_t i=0; i<512;i++)
-    // {
-    //     buf[i] = floppy_read_result(DATA_FIFO);
-    //     // if(buf[i] == '\0') {
-    //     //     printstr("data over\n");
-    //     //     break;
-    //     // }
-    //     printchar(buf[i]+'0');
-    // }
+    
+    printstr("f read issued\n");
 
     // status, ending chs, bytes per sec vals
     uint8_t st0,st1,st2, cyl_r, hd_r, sec_r, bps;

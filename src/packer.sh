@@ -33,4 +33,4 @@ rm drivers/*.o
 rm x86/*.o
 
 # run it bruhh. Default is 128M. Anything <= 2M will not be able to boot
-qemu-system-i386 -cdrom pongos.iso -fda ./bin/tst2.img -boot d -m 64M
+qemu-system-i386 -cdrom pongos.iso -fda ./bin/app.flp -boot d -m 64M
