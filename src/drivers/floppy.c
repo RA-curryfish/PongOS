@@ -152,7 +152,6 @@ uint8_t floppy_read_result(uint16_t reg)
 
 void floppy_irq()
 {
-    printstr("IRQ6\n");
     floppy_irq_done=true;
 }
 
@@ -182,7 +181,6 @@ void floppy_configure()
     floppy_send_cmd(CMD_SET_PARAM, DATA_FIFO);
     floppy_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
     floppy_send_cmd(0x2, DATA_FIFO); // load time, enable DMA
-    printstr("specify done\n");
 
     // floppy_send_cmd(CMD_CONFIGURE, DATA_FIFO);
     // floppy_send_cmd(0, DATA_FIFO);

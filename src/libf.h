@@ -21,3 +21,4 @@ void memcpy(void *dest, void *source, size_t len);
     desc - wheter arr sorted in asc or desc
 */
 uint32_t bin_search(void* arr, uint8_t item_disp, uint32_t item, uint32_t low, uint32_t high, uint8_t elem_size, bool desc);
+void printf(const char *format, ...);
