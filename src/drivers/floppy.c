@@ -58,10 +58,9 @@ typedef struct chs {
 static volatile uint8_t floppy_state=0;
 static volatile bool floppy_irq_done = false;
 
-#define DMA_LEN 0x1000
 // set DMA in a 1:1 mapped area :) (maybe 1MB-2MB) 
-static const char* floppy_dmabuf; //= 0x100000;
-void floppy_dma_init(bool rw)
+static char* floppy_dmabuf;
+void floppy_dma_init(bool rw, uint16_t len)
 {
     union { 
         unsigned char b[4]; // 4 bytes 
@@ -69,7 +68,7 @@ void floppy_dma_init(bool rw)
     } a, c; // address and count 
 
     a.l = (unsigned) floppy_dmabuf; 
-    c.l = (unsigned) DMA_LEN - 1; // -1 because of DMA counting 
+    c.l = (unsigned) len - 1; // -1 because of DMA counting 
 
     // check that address is at most 24-bits (under 16MB) 
     // check that count is at most 16-bits (DMA limit) 
@@ -97,7 +96,7 @@ void floppy_dma_init(bool rw)
     outb(0x05, c.b[0]); //  - count low byte 
     outb(0x05, c.b[1]); //  - count high byte 
 
-    outb(0x0b, mode);   // set mode (see above) 
+    outb(0x0b, mode);   // set mode
 
     outb(0x0a, 0x02);   // unmask chan 2 
 }
@@ -229,7 +228,7 @@ void floppy_seek(chs_t chs)
     printstr("ERROR: FLOPPY SEEK\n");
 }
 
-void fpc_read(char* buf, uint32_t lba)
+void fpc_read(char** buf, uint32_t lba, uint16_t len)
 {    
     // seek stuff 
     chs_t chs;
@@ -237,7 +236,7 @@ void fpc_read(char* buf, uint32_t lba)
     floppy_seek(chs);
     
     fpc_motor_on(true);
-    floppy_dma_init(0);
+    floppy_dma_init(0, len);
     // wait until motor is vroom vvroom
     for(uint8_t i=0;i<250;i++) iowait();
 
@@ -326,8 +325,8 @@ void fpc_read(char* buf, uint32_t lba)
         printstr("floppy_do_sector: not writable\n"); 
         error = 2; 
     }
-    if(!error)
-        buf = floppy_dmabuf;
+    if(error==0)
+        *buf = floppy_dmabuf;
 }
 
 // void floppy_write(char* buf, uint32_t dev_loc, uint32_t sz)

@@ -114,5 +114,5 @@ uint8_t get_bitmap(uint8_t idx)
 
 void ph_mem_initialize()
 {
-
+    memset((void*)DMA_BEGIN, '\0',FRAME_SIZE);
 }

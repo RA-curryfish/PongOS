@@ -48,9 +48,9 @@ void kernel_main(unsigned long* mbt)
 	init_hal(); // pass memory bounds for phy mem
 	splash_screen();
 
-	char* buf; buf = DMA_BEGIN;
-	fpc_read(buf,0);
-	for(uint16_t i=0;i<1040;i++) printchar(*(buf+i));
+	char* buf; uint16_t buf_len=512;
+	fpc_read(&buf,0,buf_len);
+	for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
 
 	// busy loop
 	while(true){}
