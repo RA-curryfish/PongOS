@@ -2,10 +2,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// ~ 4MB of memory between 4MB-8MB
-#define MEM_BASE_ADDR 0x400000
-#define MEM_END_ADDR 0x7FFFFF
+// User app memory pool at 4MB-32MB
+#define U_MEM_BASE 0x400000
+#define  U_MEM_END 0x1FFFFFF
 #define FRAME_SIZE 0x1000
+// DMA in identity mapped region
+#define DMA_BEGIN 0x100000
+#define DMA_END 0x200000
 // #define MAX_MEM_BLOCK_LAYER 10
 
 // typedef struct mem_range {

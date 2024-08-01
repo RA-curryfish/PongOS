@@ -60,7 +60,7 @@ static volatile bool floppy_irq_done = false;
 
 #define DMA_LEN 0x1000
 // set DMA in a 1:1 mapped area :) (maybe 1MB-2MB) 
-static const char* floppy_dmabuf = 0x100000;
+static const char* floppy_dmabuf; //= 0x100000;
 void floppy_dma_init(bool rw)
 {
     union { 
@@ -102,7 +102,7 @@ void floppy_dma_init(bool rw)
     outb(0x0a, 0x02);   // unmask chan 2 
 }
 
-void floppy_motor(bool switch_on)
+void fpc_motor_on(bool switch_on)
 {
     if(switch_on) {
         if(floppy_state==0) {
@@ -120,7 +120,7 @@ void floppy_motor(bool switch_on)
     }
 }
 
-void floppy_wait(uint8_t bit, bool set)
+void fpc_wait(uint8_t bit, bool set)
 {
     while(true) {
         uint8_t msr = inb(MAIN_STATUS_REGISTER);
@@ -136,26 +136,26 @@ void lba_to_chs(uint32_t lba, chs_t* chs)
     chs->sector = ((lba % (2 * SECTORS_PER_TRACK)) % SECTORS_PER_TRACK + 1);
 }
 
-void floppy_send_cmd(uint8_t cmd, uint16_t reg) 
+void fpc_send_cmd(uint8_t cmd, uint16_t reg) 
 { 
-    floppy_wait(RQM, true);
+    fpc_wait(RQM, true);
     outb(reg, cmd);
-    floppy_wait(RQM, true);
+    fpc_wait(RQM, true);
 } 
 
-uint8_t floppy_read_result(uint16_t reg)
+uint8_t fpc_read_result(uint16_t reg)
 {
-    floppy_wait(RQM, true);
+    fpc_wait(RQM, true);
     return inb(reg);
-    floppy_wait(RQM, true);
+    fpc_wait(RQM, true);
 }
 
-void floppy_irq()
+void fpc_irq()
 {
     floppy_irq_done=true;
 }
 
-void floppy_irq_wait()
+void fpc_irq_wait()
 {
     while(!floppy_irq_done);
     // floppy_irq_done=false;
@@ -163,24 +163,24 @@ void floppy_irq_wait()
 
 void floppy_fetch_res(uint8_t* st0, uint8_t* cyl)
 {
-    floppy_send_cmd(CMD_SENSE_INTERRUPT, DATA_FIFO);
-    *st0=floppy_read_result(DATA_FIFO);
-    *cyl=floppy_read_result(DATA_FIFO);
+    fpc_send_cmd(CMD_SENSE_INTERRUPT, DATA_FIFO);
+    *st0=fpc_read_result(DATA_FIFO);
+    *cyl=fpc_read_result(DATA_FIFO);
 }
 
-void floppy_reset()
+void fpc_reset()
 {
     outb(DIGITAL_OUTPUT_REGISTER,0);
     outb(DIGITAL_OUTPUT_REGISTER,0x0c); // 0b00001100
 }
 
-void floppy_configure()
+void fpc_configure()
 {
     // specify command
-    floppy_send_cmd(0,CONFIGURATION_CONTROL_REGISTER); // set datarate
-    floppy_send_cmd(CMD_SET_PARAM, DATA_FIFO);
-    floppy_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
-    floppy_send_cmd(0x2, DATA_FIFO); // load time, enable DMA
+    fpc_send_cmd(0,CONFIGURATION_CONTROL_REGISTER); // set datarate
+    fpc_send_cmd(CMD_SET_PARAM, DATA_FIFO);
+    fpc_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
+    fpc_send_cmd(0x2, DATA_FIFO); // load time, enable DMA
 
     // floppy_send_cmd(CMD_CONFIGURE, DATA_FIFO);
     // floppy_send_cmd(0, DATA_FIFO);
@@ -189,80 +189,81 @@ void floppy_configure()
     // no result, no irq
 }
 
-void floppy_init()
+void fpc_init(char* dmabuf)
 {   
-    floppy_reset();
-    floppy_irq_wait();
-    floppy_configure();
+    fpc_reset();
+    fpc_irq_wait();
+    fpc_configure();
 
     // recalibrate
-    floppy_motor(true);
-    floppy_send_cmd(CMD_RECALIBRATE, DATA_FIFO);
-    floppy_send_cmd(0,DATA_FIFO);
-    floppy_read_result(DATA_FIFO);
-    if(floppy_read_result(DATA_FIFO)!=0) printstr("ERROR: FLOPPY INIT");
-    floppy_motor(false);
+    fpc_motor_on(true);
+    fpc_send_cmd(CMD_RECALIBRATE, DATA_FIFO);
+    fpc_send_cmd(0,DATA_FIFO);
+    fpc_read_result(DATA_FIFO);
+    if(fpc_read_result(DATA_FIFO)!=0) printstr("ERROR: FLOPPY INIT");
+    fpc_motor_on(false);
 
     // lock settings
-    floppy_send_cmd(CMD_LOCK, DATA_FIFO);
+    fpc_send_cmd(CMD_LOCK, DATA_FIFO);
+    floppy_dmabuf = dmabuf;
 }
 
 void floppy_seek(chs_t chs)
 {
-    if(!floppy_state) floppy_motor(true); // turn on motor if not already
+    if(!floppy_state) fpc_motor_on(true); // turn on motor if not already
     // printstr("f seek\n");
     floppy_irq_done=false;
-    floppy_send_cmd(CMD_SEEK, DATA_FIFO);
-    floppy_send_cmd(chs.head<<2, DATA_FIFO); // head 0, drive 0
-    floppy_send_cmd(chs.cyl, DATA_FIFO);
+    fpc_send_cmd(CMD_SEEK, DATA_FIFO);
+    fpc_send_cmd(chs.head<<2, DATA_FIFO); // head 0, drive 0
+    fpc_send_cmd(chs.cyl, DATA_FIFO);
     floppy_irq_done=false;
     
     // send sense interrupt
     uint8_t st0,cyl;
     floppy_fetch_res(&st0,&cyl);
     if(cyl==chs.cyl) {
-        floppy_motor(false); //turn off motor
+        fpc_motor_on(false); //turn off motor
         // printstr("seek end\n");
         return;
     }
     printstr("ERROR: FLOPPY SEEK\n");
 }
 
-void floppy_read(char* buf, uint32_t lba)
+void fpc_read(char* buf, uint32_t lba)
 {    
     // seek stuff 
     chs_t chs;
     lba_to_chs(lba, &chs);
     floppy_seek(chs);
     
-    floppy_motor(true);
+    fpc_motor_on(true);
     floppy_dma_init(0);
     // wait until motor is vroom vvroom
     for(uint8_t i=0;i<250;i++) iowait();
 
     // issue std r/w data cmd
     floppy_irq_done=false;
-    floppy_send_cmd(CMD_READ_DATA|MT|MFM, DATA_FIFO);
-    floppy_send_cmd((chs.head<<2)|0, DATA_FIFO); // head num, drive num
-    floppy_send_cmd(chs.cyl, DATA_FIFO); //cyl
-    floppy_send_cmd(chs.head, DATA_FIFO); //head
-    floppy_send_cmd(chs.sector, DATA_FIFO); // count starts from 1
-    floppy_send_cmd(0x2, DATA_FIFO); //512bytes per sector
-    floppy_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
-    floppy_send_cmd(0x1B, DATA_FIFO); //GAP size
-    floppy_send_cmd(0xFF, DATA_FIFO);
-    floppy_irq_wait();
+    fpc_send_cmd(CMD_READ_DATA|MT|MFM, DATA_FIFO);
+    fpc_send_cmd((chs.head<<2)|0, DATA_FIFO); // head num, drive num
+    fpc_send_cmd(chs.cyl, DATA_FIFO); //cyl
+    fpc_send_cmd(chs.head, DATA_FIFO); //head
+    fpc_send_cmd(chs.sector, DATA_FIFO); // count starts from 1
+    fpc_send_cmd(0x2, DATA_FIFO); //512bytes per sector
+    fpc_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
+    fpc_send_cmd(0x1B, DATA_FIFO); //GAP size
+    fpc_send_cmd(0xFF, DATA_FIFO);
+    fpc_irq_wait();
     floppy_irq_done=false;
     
     // status, ending chs, bytes per sec vals
     uint8_t st0,st1,st2, cyl_r, hd_r, sec_r, bps;
-    st0 = floppy_read_result(DATA_FIFO); //0x20 -> seek end
-    st1 = floppy_read_result(DATA_FIFO);
-    st2 = floppy_read_result(DATA_FIFO);
-    cyl_r = floppy_read_result(DATA_FIFO);
-    hd_r = floppy_read_result(DATA_FIFO);
-    sec_r = floppy_read_result(DATA_FIFO);
-    bps = floppy_read_result(DATA_FIFO);
+    st0 = fpc_read_result(DATA_FIFO); //0x20 -> seek end
+    st1 = fpc_read_result(DATA_FIFO);
+    st2 = fpc_read_result(DATA_FIFO);
+    cyl_r = fpc_read_result(DATA_FIFO);
+    hd_r = fpc_read_result(DATA_FIFO);
+    sec_r = fpc_read_result(DATA_FIFO);
+    bps = fpc_read_result(DATA_FIFO);
     
     // yes i ripped this off from someone ;_; (link in the readme)
     int error = 0; 
@@ -324,7 +325,9 @@ void floppy_read(char* buf, uint32_t lba)
     if(st1 & 0x02) { 
         printstr("floppy_do_sector: not writable\n"); 
         error = 2; 
-    } 
+    }
+    if(!error)
+        buf = floppy_dmabuf;
 }
 
 // void floppy_write(char* buf, uint32_t dev_loc, uint32_t sz)

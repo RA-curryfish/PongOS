@@ -1,6 +1,7 @@
 #include "ph_mem_allocator.h"
 #include "libf.h"
-
+#define MEM_BASE_ADDR U_MEM_BASE
+#define MEM_END_ADDR 0x800000
 // const uint16_t mem_blk_arr_size = (1<<((uint32_t)MAX_MEM_BLOCK_LAYER+1))-1; // need 2047 len array
 // mem_block_node_t mem_blk_arr[(1<<((uint32_t)MAX_MEM_BLOCK_LAYER+1))-1]; // can be made into bool array?
 // // left child = 2*i+1,  right child = 2*i+2

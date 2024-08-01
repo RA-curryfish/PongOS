@@ -22,7 +22,7 @@ void register_interrupts()
 {
 	irq_register_handler(0,timer_handle);
 	irq_register_handler(1,keyboard_handle);
-    irq_register_handler(6, floppy_irq);
+    irq_register_handler(6, fpc_irq);
 	isr_register_handler(0x0E,pg_fault);
 }
 
@@ -48,5 +48,5 @@ void init_hal()
     ph_mem_initialize();
 
     // init floppy driver
-    floppy_init();
+    fpc_init((char*)DMA_BEGIN);
 }

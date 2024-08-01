@@ -2,7 +2,7 @@
 #include "x86/hal.h"
 #include "boot/multiboot.h"
 #include "drivers/floppy.h"
-// #include "drivers/terminal.h"
+#include "ph_mem_allocator.h"
 #include "libf.h"
 
 #ifdef __linux__
@@ -48,13 +48,10 @@ void kernel_main(unsigned long* mbt)
 	init_hal(); // pass memory bounds for phy mem
 	splash_screen();
 
-	// char* buf; buf = 0x100000;
-	// floppy_read(buf,0);
-	// for(uint16_t i=0;i<1040;i++) printchar(*(buf+i));
+	char* buf; buf = DMA_BEGIN;
+	fpc_read(buf,0);
+	for(uint16_t i=0;i<1040;i++) printchar(*(buf+i));
 
-	printf("kernel main: %x\n", kernel_main);
-	printf("init HAL: %x\n", init_hal);
-	printf("floppy init: %x\n", floppy_init);
 	// busy loop
 	while(true){}
 }
