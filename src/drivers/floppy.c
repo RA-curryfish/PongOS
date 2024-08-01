@@ -58,19 +58,64 @@ typedef struct chs {
 static volatile uint8_t floppy_state=0;
 static volatile bool floppy_irq_done = false;
 
+#define DMA_LEN 0x4800
+// overwrites multiboot stuff
+// static const char floppy_dmabuf[DMA_LEN] __attribute__((aligned(0x8000)));
+static const char* floppy_dmabuf = 0x400000;
+void floppy_dma_init(bool rw)
+{
+    union { 
+        unsigned char b[4]; // 4 bytes 
+        unsigned long l;    // 1 long = 32-bit 
+    } a, c; // address and count 
+
+    a.l = (unsigned) floppy_dmabuf; 
+    c.l = (unsigned) DMA_LEN - 1; // -1 because of DMA counting 
+
+    // check that address is at most 24-bits (under 16MB) 
+    // check that count is at most 16-bits (DMA limit) 
+    // check that if we add count and address we don't get a carry 
+    // (DMA can't deal with such a carry, this is the 64k boundary limit) 
+    if((a.l >> 24) || (c.l >> 16) || (((a.l&0xffff)+c.l)>>16)) { 
+        printstr("floppy_dma_init: static buffer problem\n"); 
+    } 
+
+    unsigned char mode; 
+    // 01:0:0:01:10 = single/inc/no-auto/to-mem/chan2 
+    if(rw) mode = 0x46;
+    else mode = 0x4a;
+    // 01:0:0:10:10 = single/inc/no-auto/from-mem/chan2 
+
+    outb(0x0a, 0x06);   // mask chan 2 
+
+    outb(0x0c, 0xff);   // reset flip-flop 
+    outb(0x04, a.b[0]); //  - address low byte 
+    outb(0x04, a.b[1]); //  - address high byte 
+
+    outb(0x81, a.b[2]); // external page register 
+
+    outb(0x0c, 0xff);   // reset flip-flop 
+    outb(0x05, c.b[0]); //  - count low byte 
+    outb(0x05, c.b[1]); //  - count high byte 
+
+    outb(0x0b, mode);   // set mode (see above) 
+
+    outb(0x0a, 0x02);   // unmask chan 2 
+}
+
 void floppy_motor(bool switch_on)
 {
     if(switch_on) {
         if(floppy_state==0) {
-            outb(DIGITAL_OUTPUT_REGISTER, 0x1c); //0b00011100 clear IRQ/DMA bit??
-            for(uint16_t i=0; i<10000; i++) iowait();
+            outb(DIGITAL_OUTPUT_REGISTER, 0x1c);
+            for(uint16_t i=0; i<60000; i++) iowait();
         }
         floppy_state=1;
     }
     else {
         if(floppy_state==1) {
-            outb(DIGITAL_OUTPUT_REGISTER, 0xc); // here too
-            for(uint16_t i=0; i<10000; i++) iowait();
+            outb(DIGITAL_OUTPUT_REGISTER, 0xc);
+            for(uint16_t i=0; i<60000; i++) iowait();
         }
         floppy_state=0;
     }
@@ -92,14 +137,14 @@ void lba_to_chs(uint32_t lba, chs_t* chs)
     chs->sector = ((lba % (2 * SECTORS_PER_TRACK)) % SECTORS_PER_TRACK + 1);
 }
 
-void floppy_send_cmd(enum data_cmd cmd, enum floppy_regs reg) 
+void floppy_send_cmd(uint8_t cmd, uint16_t reg) 
 { 
     floppy_wait(RQM, true);
     outb(reg, cmd);
     floppy_wait(RQM, true);
 } 
 
-uint8_t floppy_read_result(enum floppy_regs reg)
+uint8_t floppy_read_result(uint16_t reg)
 {
     floppy_wait(RQM, true);
     return inb(reg);
@@ -108,29 +153,42 @@ uint8_t floppy_read_result(enum floppy_regs reg)
 
 void floppy_irq()
 {
-    printchar('y');
-    printchar('\n');
+    printstr("IRQ6\n");
     floppy_irq_done=true;
 }
 
 void floppy_irq_wait()
 {
     while(!floppy_irq_done);
-    floppy_irq_done=false;
+    // floppy_irq_done=false;
+}
+
+void floppy_fetch_res(uint8_t* st0, uint8_t* cyl)
+{
+    floppy_send_cmd(CMD_SENSE_INTERRUPT, DATA_FIFO);
+    *st0=floppy_read_result(DATA_FIFO);
+    *cyl=floppy_read_result(DATA_FIFO);
 }
 
 void floppy_reset()
 {
-    floppy_send_cmd(0, DIGITAL_OUTPUT_REGISTER);
-    floppy_send_cmd(0xc, DIGITAL_OUTPUT_REGISTER);
+    outb(DIGITAL_OUTPUT_REGISTER,0);
+    outb(DIGITAL_OUTPUT_REGISTER,0x0c); // 0b00001100
 }
 
 void floppy_configure()
 {
-    floppy_send_cmd(CMD_CONFIGURE, DATA_FIFO);
-    floppy_send_cmd(0, DATA_FIFO);
-    floppy_send_cmd((1<<6|0<<5|1<<4|0b1000), DATA_FIFO); //imp seek, !fifo_disable, polling_mode_disable, threshold 
-    floppy_send_cmd(0, DATA_FIFO);
+    // specify command
+    floppy_send_cmd(0,CONFIGURATION_CONTROL_REGISTER); // set datarate
+    floppy_send_cmd(CMD_SET_PARAM, DATA_FIFO);
+    floppy_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
+    floppy_send_cmd(0x2, DATA_FIFO); // load time, enable DMA
+    printstr("specify done\n");
+
+    // floppy_send_cmd(CMD_CONFIGURE, DATA_FIFO);
+    // floppy_send_cmd(0, DATA_FIFO);
+    // floppy_send_cmd((1<<6|0<<5|1<<4|0b1000), DATA_FIFO); //imp seek, !fifo_disable, polling_mode_disable, threshold 
+    // floppy_send_cmd(0, DATA_FIFO);
     // no result, no irq
 }
 
@@ -138,40 +196,49 @@ void floppy_init()
 {   
     printstr("f Init\n");
     floppy_reset();
-    printstr("rst done\n");
+    floppy_irq_wait();
     floppy_configure();
-    printstr("conf done\n");
 
-    // specify command
-    floppy_send_cmd(0,CONFIGURATION_CONTROL_REGISTER); // set datarate
-    floppy_send_cmd(CMD_SET_PARAM, DATA_FIFO);
-    floppy_send_cmd(0xdf, DATA_FIFO); // steprate, unload time
-    floppy_send_cmd(0x3, DATA_FIFO); // load time, disable DMA
-    printstr("specify done\n");
+    // recalibrate
+    floppy_motor(true);
+    floppy_send_cmd(CMD_RECALIBRATE, DATA_FIFO);
+    floppy_send_cmd(0,DATA_FIFO);
+    floppy_read_result(DATA_FIFO);
+    if(floppy_read_result(DATA_FIFO)!=0) printstr("ERROR");
+    floppy_motor(false);
 
     // lock settings
     floppy_send_cmd(CMD_LOCK, DATA_FIFO);
     printstr("f Init end\n");
 }
 
-void floppy_seek(uint8_t cyl)
+void floppy_seek(chs_t chs)
 {
     if(!floppy_state) floppy_motor(true); // turn on motor if not already
-
+    printstr("f seek\n");
+    floppy_irq_done=false;
     floppy_send_cmd(CMD_SEEK, DATA_FIFO);
-    floppy_send_cmd(0<<2|0, DATA_FIFO); // head 0, drive 0
-    floppy_send_cmd(cyl, DATA_FIFO);
-    floppy_wait(1<<0, false); // check disk active bit to be unset?
+    floppy_send_cmd(chs.head<<2, DATA_FIFO); // head 0, drive 0
+    floppy_send_cmd(chs.cyl, DATA_FIFO);
+    // floppy_irq_wait(); //??
+    floppy_irq_done=false;
     
-    // send sense interrupt cmd
-    floppy_send_cmd(CMD_SENSE_INTERRUPT, DATA_FIFO);
-    do {
-        uint8_t st0 = floppy_read_result(DATA_FIFO);
-        uint8_t cylinder = floppy_read_result(DATA_FIFO);
-        if (cyl==cylinder) break;
-    } while (true); // should idealy not run more than ocne
+    // send sense interrupt
+    uint8_t st0,cyl;
+    floppy_fetch_res(&st0,&cyl);
+    floppy_wait(1<<0, false); // check disk active bit to be unset?
 
-    floppy_motor(false); //turn off motor
+    if(cyl==chs.cyl) {
+        floppy_motor(false); //turn off motor
+        printstr("seek end\n");
+        return;
+    }
+    // do {
+    //     uint8_t st0 = floppy_read_result(DATA_FIFO);
+    //     uint8_t cylinder = floppy_read_result(DATA_FIFO);
+    //     if (cyl==cylinder) break;
+    // } while (true); // should idealy not run more than ocne
+    printstr("ERROR SEEK\n");
 }
 
 void floppy_read(char* buf, uint32_t lba)
@@ -180,15 +247,19 @@ void floppy_read(char* buf, uint32_t lba)
     // seek stuff 
     chs_t chs;
     lba_to_chs(lba, &chs);
-    printchar(chs.cyl+'0');
-    printchar(chs.head+'0');
-    printchar(chs.sector+'0');
-    // floppy_seek(chs.cyl); // needed??
+    // floppy_seek(chs); // needed??
+    chs.head=1;
+    floppy_seek(chs);
+    chs.head=0;
     
+    floppy_motor(true);
+    floppy_dma_init(0);
     printstr("f read\n");
+    
+    for(uint8_t i=0;i<250;i++) iowait();
 
     // issue std r/w data cmd
-    floppy_send_cmd(CMD_READ_DATA|MT|MFM,DATA_FIFO);
+    floppy_send_cmd(CMD_READ_DATA|MT|MFM, DATA_FIFO);
     floppy_send_cmd((chs.head<<2)|0, DATA_FIFO); // head num, drive num
     floppy_send_cmd(chs.cyl, DATA_FIFO); //cyl
     floppy_send_cmd(chs.head, DATA_FIFO); //head
@@ -197,18 +268,21 @@ void floppy_read(char* buf, uint32_t lba)
     floppy_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
     floppy_send_cmd(0x1B, DATA_FIFO); //GAP size
     floppy_send_cmd(0xFF, DATA_FIFO);
+    floppy_irq_done=false;
+    floppy_irq_wait();
+    floppy_irq_done=false;
     floppy_wait(RQM, true);
-    floppy_wait(NDMA, false);
+    // floppy_wait(NDMA, false);
 
-    for(uint16_t i=0; i<512;i++)
-    {
-        buf[i] = floppy_read_result(DATA_FIFO);
-        // if(buf[i] == '\0') {
-        //     printstr("data over\n");
-        //     break;
-        // }
-        printchar(buf[i]);
-    }
+    // for(uint16_t i=0; i<512;i++)
+    // {
+    //     buf[i] = floppy_read_result(DATA_FIFO);
+    //     // if(buf[i] == '\0') {
+    //     //     printstr("data over\n");
+    //     //     break;
+    //     // }
+    //     printchar(buf[i]+'0');
+    // }
 
     // status, ending chs, bytes per sec vals
     uint8_t st0,st1,st2, cyl_r, hd_r, sec_r, bps;
@@ -220,7 +294,13 @@ void floppy_read(char* buf, uint32_t lba)
     hd_r = floppy_read_result(DATA_FIFO);
     sec_r = floppy_read_result(DATA_FIFO);
     bps = floppy_read_result(DATA_FIFO); // should be 2??
-
+    printchar(st0+'0');
+    printchar(st1+'0');
+    printchar(st2+'0');
+    printchar(cyl_r+'0');
+    printchar(hd_r+'0');
+    printchar(sec_r+'0');
+    printchar(bps+'0');
     int error = 0; 
 
         if(st0 & 0xC0) { 
@@ -276,7 +356,6 @@ void floppy_read(char* buf, uint32_t lba)
         } 
         if(bps != 0x2) { 
             printstr("floppy_do_sector: wanted 512B/sector, got ");
-            printchar(bps+'0');
             error = 1; 
         } 
         if(st1 & 0x02) { 

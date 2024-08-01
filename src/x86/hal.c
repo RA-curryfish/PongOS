@@ -49,5 +49,4 @@ void init_hal()
 
     // init floppy driver
     floppy_init();
-
 }

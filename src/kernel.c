@@ -48,8 +48,9 @@ void kernel_main(unsigned long* mbt)
 	init_hal(); // pass memory bounds for phy mem
 	// splash_screen();
 
-	char buf[512]; buf[0] = '\0';
+	char* buf; buf = 0x400000;
 	floppy_read(buf,0);
+	printchar(*buf);
 
 	// busy loop
 	while(true){}
