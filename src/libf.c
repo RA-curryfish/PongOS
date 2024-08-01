@@ -8,6 +8,18 @@ size_t strlen(const char *s)
 	return len-1;
 }
 
+void strrev(char *s)
+{
+	size_t len = strlen(s);
+	size_t l=0, r=len-1;
+	while(l<=r) {
+		char tmp = s[l];
+		s[l] = s[r];
+		s[r] = tmp;
+		l++;r--;
+	}
+}
+
 bool strcmp(const char *s1, const char *s2)
 {
 	size_t len1 = strlen(s1); size_t len2 = strlen(s2);
@@ -35,13 +47,21 @@ bool strcmp_cmd(const char *user_cmd, const char *cmd)
 	return false; // unreachable
 }
 
+void memset(void *dest, char c, size_t len)
+{
+	char *d = (char*)dest;
+	while(len) {
+		*(d+len-1) = c;
+		len--;
+	}
+}
+
 void memcpy(void *dest, void *source, size_t len)
 {
 	// todo: need to handle \0
 	char *d = (char*)dest;
 	char *s = (char*)source;
-	while(len)
-	{
+	while(len) {
 		*(d+len-1) = *(s+len-1);
 		len--;
 	}
@@ -80,13 +100,36 @@ uint32_t bin_search(void* arr, uint8_t item_disp, uint32_t item, uint32_t low, u
 	return ans;
 }
 
+void itoa(char* buf, char b, int val)
+{
+	uint8_t base = (b=='d')?10:((b=='x')?16:10); // default to base 10 for now
+	int tmp = val; 
+	if (tmp==0) {
+		buf[1] = '\0'; buf[0]='0';
+		return;
+	}
+	char char_map[16] = "0123456789ABCDEF";
+	uint8_t idx=0;
+	while(tmp) {
+		buf[idx] = char_map[tmp%base];
+		tmp /= base;
+		idx++;
+	}
+	if(b=='x') {
+		buf[idx++]='x';
+		buf[idx++]='0';
+	}
+	strrev(buf);
+	buf[idx]='\0';
+}
+
 void printf(const char *format, ...)
 {
-  char **arg = (char **) &format;
-  int c;
-  char buf[20];
-
-  arg++;
+	char **arg = (char **) &format;
+	int c;
+	char buf[20];
+	memset(buf,'\0',20);
+	arg++;
 
 	while ((c = *format++) != 0) {
     	if (c != '%') printchar(c);
@@ -117,12 +160,10 @@ void printf(const char *format, ...)
 					p = "(null)";
 				string:
 					for (p2 = p; *p2; p2++);
-					for (; p2 < p + pad; p2++)
-					printchar(pad0 ? '0' : ' ');
-					while (*p)
-					printchar (*p++);
+					for (; p2 < p + pad; p2++) printchar(pad0 ? '0' : ' ');
+					while (*p) printchar(*p++);
 					break;
-				default:
+				default: // %c
 					printchar(*((int *) arg++));
 					break;
 			}

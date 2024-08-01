@@ -9,6 +9,7 @@
 size_t strlen(const char *s);
 bool strcmp(const char *s1, const char *s2);
 bool strcmp_cmd(const char *user_cmd, const char *cmd);
+void memset(void *dest, char c, size_t len);
 void memcpy(void *dest, void *source, size_t len);
 /*  binary search on structures
     Params:

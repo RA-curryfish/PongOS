@@ -52,8 +52,9 @@ void kernel_main(unsigned long* mbt)
 	// floppy_read(buf,0);
 	// for(uint16_t i=0;i<1040;i++) printchar(*(buf+i));
 
-	printf("hello world%d",5);
-
+	printf("kernel main: %x\n", kernel_main);
+	printf("init HAL: %x\n", init_hal);
+	printf("floppy init: %x\n", floppy_init);
 	// busy loop
 	while(true){}
 }
