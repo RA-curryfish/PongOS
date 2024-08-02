@@ -39,6 +39,20 @@
 // mem_range_t* allocate_mem(uint32_t size);
 // bool free_mem(mem_range_t* range);
 
+typedef struct heap_free_ll {
+    uintptr_t cur;
+    size_t size; // can guess from next and used->next?
+    size_t prev_size;
+    struct heap_free_ll* next;
+    struct heap_used_ll* prev; //??
+} heap_free_ll_t;
+
+typedef struct heap_used_ll {
+    uintptr_t cur;
+    struct heap_used_ll* next;
+    struct heap_used_ll* prev;
+} heap_used_ll_t;
+
 // Bitmap allocation
 // 1024 4KB pages -> 128 bytes
 // 2nd page in 1st byte -> (8*1 + 2)

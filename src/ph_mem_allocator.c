@@ -79,20 +79,7 @@ uint8_t mem_bitmap[(uint32_t)(
         /8)];
 static uintptr_t HEAP_BEGIN;
 static uintptr_t HEAP_END;
-
-typedef struct heap_used_ll {
-    uintptr_t cur;
-    struct heap_used_ll* next;
-    struct heap_used_ll* prev;
-} heap_used_ll_t;
-
-typedef struct heap_free_ll {
-    uintptr_t cur;
-    size_t size;
-    size_t prev_size;
-    struct heap_free_ll* next;
-    struct heap_used_ll* prev; //??
-} heap_free_ll_t;
+heap_used_ll_t* heap_used_head;
 heap_free_ll_t* heap_free_head;
 
 void ph_page_alloc()
@@ -134,7 +121,8 @@ void* ph_malloc(size_t sz)
     heap_free_ll_t* tmp = heap_free_head;
     while((tmp+sz)<HEAP_END) {
         if(tmp->size >= sz) {
-
+            // remove this node from the list, prev->next = next; next->prev = prev;
+            // insert this in the used list? need to manage used as well? or jsut free list?
         }
     }
 }
@@ -148,6 +136,10 @@ void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
 {
     memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE);
     memset((void*)heap_beg,'\0',(size_t)(heap_end-heap_beg));
+    
     HEAP_BEGIN = heap_beg; HEAP_END = heap_end;
     heap_free_head->cur = HEAP_BEGIN;
+    heap_free_head->next = NULL;heap_free_head->prev = NULL;
+    heap_free_head->size = (size_t)(heap_end-heap_beg);
+    heap_used_head->cur = NULL;heap_used_head->next = NULL;heap_used_head->prev = NULL;
 }
