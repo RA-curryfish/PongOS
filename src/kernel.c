@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include "x86/hal.h"
 #include "boot/multiboot.h"
-#include "drivers/floppy.h"
-#include "ph_mem_allocator.h"
+#include "drivers/vfs.h"
+#include "drivers/terminal.h"
 #include "libf.h"
 
 #ifdef __linux__
@@ -49,7 +49,11 @@ void kernel_main(unsigned long* mbt)
 	splash_screen();
 
 	char* buf; uint16_t buf_len=512;
-	fpc_read(&buf,0,buf_len);
+	file_t* f; f->type = DEVICE;
+	printf("%x", f);
+	printf("%x", &f->type);
+	open(f);
+	read(f,&buf,1,buf_len);
 	for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
 
 	// busy loop

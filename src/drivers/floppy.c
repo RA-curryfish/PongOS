@@ -228,7 +228,7 @@ void floppy_seek(chs_t chs)
     printstr("ERROR: FLOPPY SEEK\n");
 }
 
-void fpc_read(char** buf, uint32_t lba, uint16_t len)
+int fpc_read(char** buf, size_t lba, size_t len)
 {    
     // seek stuff 
     chs_t chs;
@@ -325,11 +325,14 @@ void fpc_read(char** buf, uint32_t lba, uint16_t len)
         printstr("floppy_do_sector: not writable\n"); 
         error = 2; 
     }
-    if(error==0)
+    if(error==0) {    
         *buf = floppy_dmabuf;
+        return len;
+    }
+    return (error*(-1));
 }
 
-// void floppy_write(char* buf, uint32_t dev_loc, uint32_t sz)
-// {
-
-// }
+int fpc_write(char* buf, size_t lba, size_t len)
+{
+    return 0;
+}
