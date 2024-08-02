@@ -269,60 +269,60 @@ int fpc_read(char** buf, size_t lba, size_t len)
     if(st0 & 0xC0) { 
         static const char * status[] = 
         { 0, "error", "invalid command", "drive not ready" };
-        printstr("floppy_do_sector: status = ");
+        printstr("floppy read: status = ");
         printstr(status[st0>>6]);
         error = 1; 
     } 
     if(st1 & 0x80) { 
-        printstr("floppy_do_sector: end of cylinder\n"); 
+        printstr("floppy read: end of cylinder\n"); 
         error = 1; 
     } 
     if(st0 & 0x08) { 
-        printstr("floppy_do_sector: drive not ready\n"); 
+        printstr("floppy read: drive not ready\n"); 
         error = 1; 
     } 
     if(st1 & 0x20) { 
-        printstr("floppy_do_sector: CRC error\n"); 
+        printstr("floppy read: CRC error\n"); 
         error = 1; 
     } 
     if(st1 & 0x10) { 
-        printstr("floppy_do_sector: controller timeout\n"); 
+        printstr("floppy read: controller timeout\n"); 
         error = 1; 
     } 
     if(st1 & 0x04) { 
-        printstr("floppy_do_sector: no data found\n"); 
+        printstr("floppy read: no data found\n"); 
         error = 1; 
     } 
     if((st1|st2) & 0x01) { 
-        printstr("floppy_do_sector: no address mark found\n"); 
+        printstr("floppy read: no address mark found\n"); 
         error = 1; 
     } 
     if(st2 & 0x40) { 
-        printstr("floppy_do_sector: deleted address mark\n"); 
+        printstr("floppy read: deleted address mark\n"); 
         error = 1; 
     } 
     if(st2 & 0x20) { 
-        printstr("floppy_do_sector: CRC error in data\n"); 
+        printstr("floppy read: CRC error in data\n"); 
         error = 1; 
     } 
     if(st2 & 0x10) { 
-        printstr("floppy_do_sector: wrong cylinder\n"); 
+        printstr("floppy read: wrong cylinder\n"); 
         error = 1; 
     } 
     if(st2 & 0x04) { 
-        printstr("floppy_do_sector: uPD765 sector not found\n"); 
+        printstr("floppy read: uPD765 sector not found\n"); 
         error = 1; 
     } 
     if(st2 & 0x02) { 
-        printstr("floppy_do_sector: bad cylinder\n"); 
+        printstr("floppy read: bad cylinder\n"); 
         error = 1; 
     } 
     if(bps != 0x2) { 
-        printstr("floppy_do_sector: wanted 512B/sector, got ");
+        printstr("floppy read: wanted 512B/sector, got ");
         error = 1; 
     } 
     if(st1 & 0x02) { 
-        printstr("floppy_do_sector: not writable\n"); 
+        printstr("floppy read: not writable\n"); 
         error = 2; 
     }
     if(error==0) {    

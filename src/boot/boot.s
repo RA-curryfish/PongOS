@@ -31,6 +31,8 @@ stack_top:
 _start:
 	mov $stack_top, %esp
 	pushl %ebx # pointer to multiboot info
+	pushl $stack_bottom # pushing stack info
+	pushl $stack_top
 	
 	# Set up PD and PTs
 	SETUP_PD

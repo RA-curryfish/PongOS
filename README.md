@@ -2,27 +2,26 @@
 Building my version of the BareBonesOS, a minimal OS built for the x86 architecture. Making the game 'Pong' on it, and coding in assembly and freestanding C (C without stdlib), and learning concepts in computer architecture, operating systems, linkers/loaders and so on.
 
 ## Milestones
-- Creating a file system
-- Enabling and using paging for applications (WIP)
 - Basic terminal to type in commands and interact with the OS (fixing small bugs)
+- Handle phy and virtual memory management (WIP)
+- Create a file system parser (FAT16?) and read from floppy
 - Launching applications (WIP - text app, Pong app)
-- Refactoring code (WIP)
 - .... 
 
 ## Progress
-- GDT set up (null, kernel code, kernel data segments)
-- Paging enabled with first 4MB being identity mapped
-- Switched to protected mode
-- IDT set up to handle interrupts
-- Terminal looking thing made
+- GDT set up (null, kernel code, kernel data segments), protected mode entered
+- Paging enabled with 0-4MB being identity mapped, 1MB-2MB DMA, 4MB-32MB for user space
+- IDT set up to handle interrupts (hardware, KB, etc)
+- A terminal pops up, can type in the cmd line but can't use arrow keys
+- Floppy controller set up to read from a floppy image
+- Skeleton VFS created
 
 ## Details
 Some details of certain concepts 
 
 ### Misc.
 - Remember to keep the kernel in some kind of a busy loop otherwise it will exit and you will spend a half a day trying to figure out why interrupts aren't working :)
-- 4kb = 0x1000, 64kb = 0x10000, 1mb = 0x100000, 4mb = 0x400000 
-
+- 4kb = 0x1000, 64kb = 0x10000, 1mb = 0x100000, 4mb = 0x400000
 
 ### Interrupts
 There are three categories:
@@ -50,7 +49,7 @@ Need to use BIOS to detect memory map to figure out which physical memory addres
 | fffc0000 | 40000   | 4.29E+09     | 262144         | res    |
 |          |         |              | 67043328       |        |
 
-(switched to using a simple bitmap for now)
+(switched to using a simple bitmap for now, have not fully implemented the things below)
 
 Using buddy allocation, There are 11 layers with the biggest having 4MB block and the smallest, a 4KB block. The layout is the following:
 
@@ -73,6 +72,14 @@ With the array to represent the system as follows:
 | Array | 4MB | 2MB | 2MB | 1MB | 1MB | 1MB | 1MB |     | 4KB  |
 | ----- | --- | --- | --- | --- | --- | --- | --- | --- | ---- |
 | idx   | 0   | 1   | 2   | 3   | 4   | 5   | 6   | ….. | 2046 |
+
+DMA is between 1MB-2MB. Kernel lies at 2MB. Since kernel lies in identity mapped region, memory allocs in kernel will be with physical memory. User memory will lie at 4MB till 32MB. Memory allocs in userland will be virtual, with the upper part of VAS mapped to kernel.
+The address space is arranged something like this: (need to move kernel PD and PTs either behind stack_bottom or ahead of stack_top else it's gonna bite me in the butt later)
+
+|           |            | 1MB    | 2MB       |      |             |              | Kernel PD | 1024 entries | PT1 1024 entries | PT2 1024 entries |             |             |                | First user frame |    | 8MB    |
+| --------- | ---------- | ------ | --------- | ---- | ----------- | ------------ | --------- | ------------ | ---------------- | ---------------- | ----------- | ----------- | -------------- | ---------------- | -- | ------ |
+| Addresses | 0          | 100000 | 200000    | …    | 203F00      | 206000       | 20B000    | 20B004       | 20C000           | 20D000           | 215FDC      | 215FE0      | 216000         | 400000           | …. | 800000 |
+| Values    | bios stuff | DMA    | multiboot | text | kernel_main | stack_bottom | 20C027    | 20D027       | 3                | 400003           | kstack_var1 | kstack_var2 | stack_top_init | 0x41             |    |        |
 
 Links:
 - https://wiki.osdev.org/Detecting_Memory_(x86)
