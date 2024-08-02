@@ -26,7 +26,7 @@ void register_interrupts()
 	isr_register_handler(0x0E,pg_fault);
 }
 
-void init_hal()
+void init_hal(void* mem_info)
 {
     // Loads the IDT into register using idt desciptor val
     // idt_descriptor -> struct {sizeof(256*idt_entries), ptr to idt[256]}
@@ -43,9 +43,6 @@ void init_hal()
     register_interrupts();
 
 	terminal_initialize();
-
-    // Initialize Physical memory
-    ph_mem_initialize();
 
     // init floppy driver
     fpc_init((char*)DMA_BEGIN);

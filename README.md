@@ -74,12 +74,14 @@ With the array to represent the system as follows:
 | idx   | 0   | 1   | 2   | 3   | 4   | 5   | 6   | ….. | 2046 |
 
 DMA is between 1MB-2MB. Kernel lies at 2MB. Since kernel lies in identity mapped region, memory allocs in kernel will be with physical memory. User memory will lie at 4MB till 32MB. Memory allocs in userland will be virtual, with the upper part of VAS mapped to kernel.
-The address space is arranged something like this: (need to move kernel PD and PTs either behind stack_bottom or ahead of stack_top else it's gonna bite me in the butt later)
+The address space is arranged something like this: (need to move kernel PD and PTs either behind stack_bottom or ahead of stack_top else it's gonna bite me in the butt later ----> there were no issues in the first place, considered old vals of PD,PT)
 
-|           |            | 1MB    | 2MB       |      |             |              | Kernel PD | 1024 entries | PT1 1024 entries | PT2 1024 entries |             |             |                | First user frame |    | 8MB    |
-| --------- | ---------- | ------ | --------- | ---- | ----------- | ------------ | --------- | ------------ | ---------------- | ---------------- | ----------- | ----------- | -------------- | ---------------- | -- | ------ |
-| Addresses | 0          | 100000 | 200000    | …    | 203F00      | 206000       | 20B000    | 20B004       | 20C000           | 20D000           | 215FDC      | 215FE0      | 216000         | 400000           | …. | 800000 |
-| Values    | bios stuff | DMA    | multiboot | text | kernel_main | stack_bottom | 20C027    | 20D027       | 3                | 400003           | kstack_var1 | kstack_var2 | stack_top_init | 0x41             |    |        |
+|           |            | 1MB    | 2MB       |      |             |             |           |               |             |            | Kernel PD | 1024 entries | PT1 1024 entries | PT2 1024 entries | First user frame |    | 8MB    |
+| --------- | ---------- | ------ | --------- | ---- | ----------- | ----------- | --------- | ------------- | ----------- | ---------- | --------- | ------------ | ---------------- | ---------------- | ---------------- | -- | ------ |
+| Addresses | 0          | 100000 | 200000    | …    | 203F00      | 206000      | 20E000    | 20E000        | 215FCC      | 216000     | 217000    | 217004       | 218000           | 219000           | 400000           | …. | 800000 |
+| Values    | bios stuff | DMA    | multiboot | text | kernel_main | kheap_begin | kheap_end | kstack_bottom | kstack_var1 | kstack_top | 218027    | 219027       | 3                | 403              |                  |    |        |
+
+In x86, cr3 register has PD address. The virtual address is 32 bits with bits 31-22 are PD entry, 21-12 are PT entry, 11-0 are offset into the page (4KB). Thus, accessing, the virtual address to access physical address 4MB would be (0000000001)(0000000000)(000000000000).
 
 Links:
 - https://wiki.osdev.org/Detecting_Memory_(x86)

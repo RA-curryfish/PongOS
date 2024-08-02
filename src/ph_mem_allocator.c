@@ -77,8 +77,25 @@ const uint8_t mem_bitmap_sz = (uint32_t)(
 uint8_t mem_bitmap[(uint32_t)(
         (((uint32_t)MEM_END_ADDR-(uint32_t)MEM_BASE_ADDR)/(uint32_t)FRAME_SIZE)
         /8)];
+static uintptr_t HEAP_BEGIN;
+static uintptr_t HEAP_END;
 
-uintptr_t* ph_malloc()
+typedef struct heap_used_ll {
+    uintptr_t cur;
+    struct heap_used_ll* next;
+    struct heap_used_ll* prev;
+} heap_used_ll_t;
+
+typedef struct heap_free_ll {
+    uintptr_t cur;
+    size_t size;
+    size_t prev_size;
+    struct heap_free_ll* next;
+    struct heap_used_ll* prev; //??
+} heap_free_ll_t;
+heap_free_ll_t* heap_free_head;
+
+void ph_page_alloc()
 {
     uintptr_t* ret = NULL;
     uint8_t frame_num = 0;
@@ -99,7 +116,7 @@ uintptr_t* ph_malloc()
     return ret;
 }
 
-void ph_free(uintptr_t* ptr)
+void ph_page_free(uintptr_t ptr)
 {
     uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
     uint16_t idx = frame_num/8;
@@ -112,7 +129,25 @@ uint8_t get_bitmap(uint8_t idx)
     return mem_bitmap[idx];
 }
 
-void ph_mem_initialize()
+void* ph_malloc(size_t sz)
 {
-    memset((void*)DMA_BEGIN, '\0',FRAME_SIZE);
+    heap_free_ll_t* tmp = heap_free_head;
+    while((tmp+sz)<HEAP_END) {
+        if(tmp->size >= sz) {
+
+        }
+    }
+}
+
+void ph_free(uintptr_t ptr)
+{
+
+}
+
+void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
+{
+    memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE);
+    memset((void*)heap_beg,'\0',(size_t)(heap_end-heap_beg));
+    HEAP_BEGIN = heap_beg; HEAP_END = heap_end;
+    heap_free_head->cur = HEAP_BEGIN;
 }

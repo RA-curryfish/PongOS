@@ -12,14 +12,15 @@
 
 .section .bss
 .align 16
+heap_begin:
+.skip 16384
+.skip 16384
+heap_end:
 stack_bottom:
-.skip 16384 # 16 KiB
-.skip 16384 # 16 KiB
 .skip 16384 # 16 KiB
 .skip 16384 # 16 KiB
 stack_top:
 
-.section .data
 .equ page_directory, __end_align_4k
 .equ page_table, __end_align_4k+0x1000
 .equ app_page_table, __end_align_4k+0x2000
@@ -33,7 +34,9 @@ _start:
 	pushl %ebx # pointer to multiboot info
 	pushl $stack_bottom # pushing stack info
 	pushl $stack_top
-	
+	pushl $heap_begin # pushing heap info
+	pushl $heap_end
+
 	# Set up PD and PTs
 	SETUP_PD
 	mov $0, %eax

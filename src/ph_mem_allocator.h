@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 // User app memory pool at 4MB-32MB
@@ -9,7 +10,6 @@
 // DMA in identity mapped region
 #define DMA_BEGIN 0x100000
 #define DMA_END 0x200000
-// #define MAX_MEM_BLOCK_LAYER 10
 
 // typedef struct mem_range {
 //     uint32_t start;
@@ -43,10 +43,10 @@
 // 1024 4KB pages -> 128 bytes
 // 2nd page in 1st byte -> (8*1 + 2)
 
-void ph_mem_initialize();
-// returns address of a free 4KB page
-uintptr_t* ph_malloc();
+void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end);
+// heap malloc for the kernel 
+void* ph_malloc(size_t sz);
 // frees single 4KB page
-void ph_free(uintptr_t* ptr);
+void ph_free(uintptr_t ptr);
 // for testing
 uint8_t get_bitmap(uint8_t idx);
