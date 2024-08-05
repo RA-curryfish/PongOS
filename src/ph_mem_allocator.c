@@ -79,8 +79,9 @@ uint8_t mem_bitmap[(uint32_t)(
         /8)];
 static uintptr_t HEAP_BEGIN;
 static uintptr_t HEAP_END;
-heap_used_ll_t* heap_used_head;
-heap_free_ll_t* heap_free_head;
+static size_t HDR_SIZE;
+static size_t FTR_SIZE;
+static heap_hdr_mdata_t* free_head;
 
 void ph_page_alloc()
 {
@@ -118,28 +119,71 @@ uint8_t get_bitmap(uint8_t idx)
 
 void* ph_malloc(size_t sz)
 {
-    heap_free_ll_t* tmp = heap_free_head;
-    while((tmp+sz)<HEAP_END) {
-        if(tmp->size >= sz) {
-            // remove this node from the list, prev->next = next; next->prev = prev;
-            // insert this in the used list? need to manage used as well? or jsut free list?
+    heap_hdr_mdata_t* tmp = free_head;
+    while(tmp) { // go thru free list
+        if(tmp->size > sz) {
+            // split block
+            heap_hdr_mdata_t* new_free = tmp+HDR_SIZE+sz+FTR_SIZE;
+            new_free->free = true;
+            new_free->prev=tmp->prev;
+            new_free->next=tmp->next;
+            new_free->size=tmp->size-sz-HDR_SIZE-FTR_SIZE;
+
+            tmp->free=false;
+            tmp->size = sz;
+
+            if(tmp->prev) tmp->prev->next = tmp->next;
+            if(tmp->next) tmp->next->prev = tmp->prev;  
         }
+        else if(tmp->size-FTR_SIZE == sz) {
+            // convert block
+        }
+        else continue;
     }
+    return NULL;
 }
 
 void ph_free(uintptr_t ptr)
 {
+    if(!ptr || ptr>HEAP_END || ptr<HEAP_BEGIN) return;
+    
+    heap_hdr_mdata_t* hdr = ptr-HDR_SIZE;
+    hdr->free = true;
+    
+    // combine consecutive free slots
+    // heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
+    // heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
+    // while(prev_hdr && hdr && prev_hdr->free) {
+    //     // prev chnk is free, reassign prev chnk's attributes to cur chnk
+    //     prev_hdr->next = hdr->next;
+    //     prev_hdr->prev = hdr->prev;
+    //     prev_hdr->size += hdr->size+HDR_SIZE+FTR_SIZE;
+    //     prev_hdr+HDR_SIZE+
 
+
+    //     prev_ftr=prev_hdr-FTR_SIZE;
+    //     hdr=prev_hdr;
+    //     prev_hdr=prev_ftr->cur_hdr;
+    // }
+
+    // find prev slot that is free
+    // find next slot that is free
+    // add the chnk between them
 }
 
 void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
 {
     memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE);
     memset((void*)heap_beg,'\0',(size_t)(heap_end-heap_beg));
+    HDR_SIZE = sizeof(heap_hdr_mdata_t);
+    FTR_SIZE = sizeof(heap_ftr_mdata_t);
     
+    // assign first free slot as entire heap
     HEAP_BEGIN = heap_beg; HEAP_END = heap_end;
-    heap_free_head->cur = HEAP_BEGIN;
-    heap_free_head->next = NULL;heap_free_head->prev = NULL;
-    heap_free_head->size = (size_t)(heap_end-heap_beg);
-    heap_used_head->cur = NULL;heap_used_head->next = NULL;heap_used_head->prev = NULL;
+    heap_hdr_mdata_t* hdr = HEAP_BEGIN; hdr->next = NULL; hdr->prev = NULL;
+    hdr->free = true;
+    hdr->size = (size_t)(heap_end-heap_beg-HDR_SIZE-FTR_SIZE);
+    heap_ftr_mdata_t* ftr= HEAP_END - FTR_SIZE;
+    ftr->cur_hdr = hdr;
+    free_head = hdr;
 }
