@@ -61,3 +61,4 @@ void* ph_malloc(size_t sz);
 void ph_free(uintptr_t ptr);
 // for testing
 uint8_t get_bitmap(uint8_t idx);
+void printvals();

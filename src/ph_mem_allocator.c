@@ -79,13 +79,13 @@ uint8_t mem_bitmap[(uint32_t)(
         /8)];
 static uintptr_t HEAP_BEGIN;
 static uintptr_t HEAP_END;
-static size_t HDR_SIZE;
-static size_t FTR_SIZE;
+static size_t HDR_SIZE = sizeof(heap_hdr_mdata_t);
+static size_t FTR_SIZE = sizeof(heap_ftr_mdata_t);
 static heap_hdr_mdata_t* free_head;
 
-void ph_page_alloc()
+uintptr_t ph_page_alloc()
 {
-    uintptr_t* ret = NULL;
+    uintptr_t ret = NULL;
     uint8_t frame_num = 0;
     bool found = false;
     uint16_t i;
@@ -147,7 +147,7 @@ void* ph_malloc(size_t sz)
         tmp->next=NULL;tmp->prev=NULL;
         heap_ftr_mdata_t* ftr = tmp+HDR_SIZE+sz;
         ftr->cur_hdr = tmp;
-        return tmp;
+        return (void*)(tmp+HDR_SIZE);
     }
     return NULL;
 }
@@ -201,7 +201,6 @@ void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
 {
     memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE);
     memset((void*)heap_beg,'\0',(size_t)(heap_end-heap_beg));
-    HDR_SIZE = sizeof(heap_hdr_mdata_t);
     FTR_SIZE = sizeof(heap_ftr_mdata_t);
     
     // assign first free slot as entire heap
@@ -212,4 +211,10 @@ void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
     heap_ftr_mdata_t* ftr= HEAP_END - FTR_SIZE;
     ftr->cur_hdr = hdr;
     free_head = hdr;
+    printf("hdr: %x\n",hdr);
+}
+
+void printvals()
+{
+    printf("freehd: %x\n",free_head);
 }
