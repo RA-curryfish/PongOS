@@ -42,7 +42,15 @@ uint8_t get_free_mem_region(memory_info_t* mem_info, uint8_t cnt)
 
 void load_binary()
 {
-	// unsigned char* buf = ""; // read this buffer from a file in the HDD/Floppy?
+	char* buf; uint16_t buf_len=512;
+	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	f->type = DEVICE;
+	open(f);
+	read(f,&buf,1,buf_len);
+	// for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
+	memcpy((void*)U_MEM_BEGIN,buf,buf_len);
+	printf(U_MEM_BEGIN);
+	ph_free((uintptr_t)f);
 }
 
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
@@ -60,19 +68,11 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	
 	init_hal(dma_beg, u_mem_beg); // pass memory bounds for phy mem
 	
-	ph_free(mem_info);
+	ph_free((uintptr_t)mem_info);
 
 	splash_screen();
 	
-	// char* buf; uint16_t buf_len=512;
-	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	// f->type = DEVICE;
-	// printf("%x\n", f);
-	// printf("%x\n", &f->type);
-	// open(f);
-	// read(f,&buf,1,buf_len);
-	// ph_free(f);
-	// for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
+	load_binary();
 
 	// busy loop
 	while(true){}

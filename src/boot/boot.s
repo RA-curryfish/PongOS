@@ -26,7 +26,7 @@ stack_top:
 .equ app_page_table, __end_align_4k+0x2000
 
 .section .text
-.include "boot/asm_macros.inc" # weird path because make is in diff path
+.include "src/boot/asm_macros.inc" # weird path because make is in diff path
 .global _start
 .type _start, @function
 _start:

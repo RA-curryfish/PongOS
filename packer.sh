@@ -21,7 +21,7 @@ do
 done
 
 # linking boot and kernel objects using linker
-$GCC -T linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib $OFILES -lgcc
+$GCC -T ./src/linker.ld -o pongos.bin -ffreestanding -O2 -nostdlib $OFILES -lgcc
 mv pongos.bin ./src/isodir/boot
 
 # creating ISO to load from grub and boot into the OS
