@@ -26,24 +26,22 @@ void register_interrupts()
 	isr_register_handler(0x0E,pg_fault);
 }
 
-void init_hal(void* mem_info)
+void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg)
 {
     // Loads the IDT into register using idt desciptor val
     // idt_descriptor -> struct {sizeof(256*idt_entries), ptr to idt[256]}
-    idt_initialize();
-    
+    idt_initialize();    
     // Initialize gates -> Fill each IDT entry by idt_set_gate
     // -> enable every gate (sst IDT_FLAG_PRESENT)
     isr_initialize();
-
     // Initialize PIC -> register 16 ISRs (32-47) with IRQ handler
     // -> enable interrupts
     irq_initialize();
-
     register_interrupts();
-
+    // Initialize physical memory
+    ph_mem_initialize(dma_beg,u_mem_beg);
+    // Initialize terminal
 	terminal_initialize();
-
     // init floppy driver
-    fpc_init((char*)DMA_BEGIN);
+    fpc_init((char*)dma_beg);
 }

@@ -3,13 +3,12 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-// User app memory pool at 4MB-32MB
-#define U_MEM_BASE 0x400000
-#define  U_MEM_END 0x1FFFFFF
 #define FRAME_SIZE 0x1000
-// DMA in identity mapped region
-#define DMA_BEGIN 0x100000
-#define DMA_END 0x200000
+
+static uintptr_t HEAP_BEGIN;
+static uintptr_t HEAP_END;
+static uintptr_t U_MEM_BEGIN;
+static uintptr_t U_MEM_END;
 
 // typedef struct mem_range {
 //     uint32_t start;
@@ -53,11 +52,11 @@ typedef struct heap_ftr_mdata {
 // Bitmap allocation
 // 1024 4KB pages -> 128 bytes
 // 2nd page in 1st byte -> (8*1 + 2)
-
-void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end);
+void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end);
+void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg);
 // heap malloc for the kernel 
 void* ph_malloc(size_t sz);
 // frees single 4KB page
 void ph_free(uintptr_t ptr);
 // for testing
-uint8_t get_bitmap(uint8_t idx);
+// uint8_t get_bitmap(uint8_t idx);

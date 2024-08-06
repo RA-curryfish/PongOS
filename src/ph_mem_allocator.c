@@ -71,51 +71,45 @@
 //     }
 // }
 
-const uint8_t mem_bitmap_sz = (uint32_t)(
-        (((uint32_t)MEM_END_ADDR-(uint32_t)MEM_BASE_ADDR)/(uint32_t)FRAME_SIZE)
-        /8); 
-uint8_t mem_bitmap[(uint32_t)(
-        (((uint32_t)MEM_END_ADDR-(uint32_t)MEM_BASE_ADDR)/(uint32_t)FRAME_SIZE)
-        /8)];
-static uintptr_t HEAP_BEGIN;
-static uintptr_t HEAP_END;
+static uintptr_t DMA_BEGIN;
+static uintptr_t DMA_END;
 static size_t HDR_SIZE = sizeof(heap_hdr_mdata_t);
 static size_t FTR_SIZE = sizeof(heap_ftr_mdata_t);
 static heap_hdr_mdata_t* free_head;
 
-uintptr_t ph_page_alloc()
-{
-    uintptr_t ret = (uintptr_t)NULL;
-    uint8_t frame_num = 0;
-    bool found = false;
-    uint16_t i;
-    for(i =0;i<mem_bitmap_sz;i++)
-    {
-        if((mem_bitmap[i]&(1<<frame_num)) == 0) {
-            found = true;
-            break;
-        }
-        if(frame_num==7) frame_num=255;
-        frame_num++;
-    }
-    if(!found) return ret;
-    mem_bitmap[i] = mem_bitmap[i] | (1<<frame_num);
-    ret = (uintptr_t)(MEM_BASE_ADDR + (8*i + frame_num)*FRAME_SIZE);
-    return ret;
-}
+// uintptr_t ph_page_alloc()
+// {
+//     uintptr_t ret = (uintptr_t)NULL;
+//     uint8_t frame_num = 0;
+//     bool found = false;
+//     uint16_t i;
+//     for(i =0;i<mem_bitmap_sz;i++)
+//     {
+//         if((mem_bitmap[i]&(1<<frame_num)) == 0) {
+//             found = true;
+//             break;
+//         }
+//         if(frame_num==7) frame_num=255;
+//         frame_num++;
+//     }
+//     if(!found) return ret;
+//     mem_bitmap[i] = mem_bitmap[i] | (1<<frame_num);
+//     ret = (uintptr_t)(U_MEM_BEGIN + (8*i + frame_num)*FRAME_SIZE);
+//     return ret;
+// }
 
-void ph_page_free(uintptr_t ptr)
-{
-    uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
-    uint16_t idx = frame_num/8;
-    frame_num = frame_num%8;
-    mem_bitmap[idx] = mem_bitmap[idx] & ~(1<<frame_num);
-}
+// void ph_page_free(uintptr_t ptr)
+// {
+//     uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
+//     uint16_t idx = frame_num/8;
+//     frame_num = frame_num%8;
+//     mem_bitmap[idx] = mem_bitmap[idx] & ~(1<<frame_num);
+// }
 
-uint8_t get_bitmap(uint8_t idx)
-{
-    return mem_bitmap[idx];
-}
+// uint8_t get_bitmap(uint8_t idx)
+// {
+//     return mem_bitmap[idx];
+// }
 
 void* ph_malloc(size_t sz)
 {
@@ -198,9 +192,8 @@ void ph_free(uintptr_t ptr)
     }
 }
 
-void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
+void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end)
 {
-    memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE);
     memset((void*)heap_beg,'\0',(size_t)(heap_end-heap_beg));
     FTR_SIZE = sizeof(heap_ftr_mdata_t);
     
@@ -212,4 +205,19 @@ void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
     heap_ftr_mdata_t* ftr= (uintptr_t)(HEAP_END - FTR_SIZE);
     ftr->cur_hdr = hdr;
     free_head = hdr;
+}
+
+void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
+{
+    DMA_BEGIN = dma_beg; DMA_END=DMA_BEGIN+0x100000-1; //1MB of DMA
+    U_MEM_BEGIN = u_mem_beg; U_MEM_END=U_MEM_BEGIN+0x2000000-1; //32MB of userspace
+    memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE*16);
+    memset((void*)U_MEM_BEGIN, '\0',(size_t)FRAME_SIZE*16);
+
+    uint8_t mem_bitmap_sz = (uint32_t)(
+        (((uint32_t)U_MEM_END-(uint32_t)U_MEM_BEGIN)/(uint32_t)FRAME_SIZE)
+        /8); 
+uint8_t mem_bitmap[(uint32_t)(
+        (((uint32_t)U_MEM_END-(uint32_t)U_MEM_BEGIN)/(uint32_t)FRAME_SIZE)
+        /8)];
 }

@@ -1,4 +1,4 @@
 // Hardware Abstraction Layer
 #pragma once
-
-void init_hal(void* mem_info);
+#include<stdint.h>
+void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg);
