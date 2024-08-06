@@ -11,7 +11,7 @@ size_t strlen(const char *s)
 void strrev(char *s)
 {
 	size_t len = strlen(s);
-	size_t l=0, r=len-1;
+	int8_t l=0, r=len-1;
 	while(l<=r) {
 		char tmp = s[l];
 		s[l] = s[r];
