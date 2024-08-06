@@ -121,7 +121,10 @@ void* ph_malloc(size_t sz)
 {
     heap_hdr_mdata_t* tmp = free_head;
     while(tmp && (tmp+sz+HDR_SIZE+FTR_SIZE)<HEAP_END) { // go thru free list
-        if(tmp->size < sz) continue;
+        if(tmp->size < sz) {
+            tmp = tmp->next;
+            continue;
+        }
         else if(tmp->size > sz) { // split block
             heap_hdr_mdata_t* new_free = tmp+HDR_SIZE+sz+FTR_SIZE;
             new_free->free = true;
@@ -156,35 +159,42 @@ void ph_free(uintptr_t ptr)
     heap_hdr_mdata_t* hdr = ptr-HDR_SIZE;
     hdr->free = true;
 
-    if(hdr==HEAP_BEGIN) { // reset the free head
+    // combine consecutive free slots
+    heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
+    heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
+    while(prev_hdr && prev_hdr>=free_head && hdr && prev_hdr->free) {
+        // prev chnk is free, combine chnks
+        prev_hdr->next = hdr->next;
+        prev_hdr->prev = hdr->prev;
+        heap_ftr_mdata_t* ftr = hdr+HDR_SIZE+hdr->size;
+        ftr->cur_hdr = prev_hdr;
+        prev_hdr->size += hdr->size+HDR_SIZE+FTR_SIZE;
+        
+        // go backwards
+        hdr=prev_hdr;
+        prev_ftr=hdr-FTR_SIZE;
+        prev_hdr=prev_ftr->cur_hdr;
+    }
+
+    if(hdr==HEAP_BEGIN || hdr<free_head) { // reset the free head
         hdr->next=free_head;
         free_head=hdr;
         return;
     }
     // else
-    heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
-    heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
-    while(prev_hdr && hdr && prev_hdr)
+    // add the chnk between two frees
+    heap_hdr_mdata_t* tmp = free_head;
+    while(tmp) {
+        if(tmp<hdr && tmp->next>hdr) { // hdr exists between
+            hdr->prev = tmp;
+            hdr->next = tmp->next;
 
-    // combine consecutive free slots
-    // heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
-    // heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
-    // while(prev_hdr && hdr && prev_hdr->free) {
-    //     // prev chnk is free, reassign prev chnk's attributes to cur chnk
-    //     prev_hdr->next = hdr->next;
-    //     prev_hdr->prev = hdr->prev;
-    //     prev_hdr->size += hdr->size+HDR_SIZE+FTR_SIZE;
-    //     prev_hdr+HDR_SIZE+
-
-
-    //     prev_ftr=prev_hdr-FTR_SIZE;
-    //     hdr=prev_hdr;
-    //     prev_hdr=prev_ftr->cur_hdr;
-    // }
-
-    // find prev slot that is free
-    // find next slot that is free
-    // add the chnk between them
+            tmp->next = hdr;
+            hdr->next->prev = hdr;
+            break;
+        }
+        tmp = tmp->next;
+    }
 }
 
 void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
