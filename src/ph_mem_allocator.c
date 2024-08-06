@@ -120,25 +120,31 @@ uint8_t get_bitmap(uint8_t idx)
 void* ph_malloc(size_t sz)
 {
     heap_hdr_mdata_t* tmp = free_head;
-    while(tmp) { // go thru free list
-        if(tmp->size > sz) {
-            // split block
+    while(tmp && (tmp+sz+HDR_SIZE+FTR_SIZE)<HEAP_END) { // go thru free list
+        if(tmp->size < sz) continue;
+        else if(tmp->size > sz) { // split block
             heap_hdr_mdata_t* new_free = tmp+HDR_SIZE+sz+FTR_SIZE;
             new_free->free = true;
             new_free->prev=tmp->prev;
             new_free->next=tmp->next;
             new_free->size=tmp->size-sz-HDR_SIZE-FTR_SIZE;
-
-            tmp->free=false;
+            heap_ftr_mdata_t* ftr=tmp+tmp->size;
+            ftr->cur_hdr=new_free;
+            
             tmp->size = sz;
 
-            if(tmp->prev) tmp->prev->next = tmp->next;
-            if(tmp->next) tmp->next->prev = tmp->prev;  
+            if(tmp==free_head) free_head=new_free; // shift head to next free block
         }
-        else if(tmp->size-FTR_SIZE == sz) {
-            // convert block
+        else { // else exact fit
+            if(tmp==free_head) free_head=tmp->next;
         }
-        else continue;
+        tmp->free=false;
+        if(tmp->prev) tmp->prev->next = tmp->next;
+        if(tmp->next) tmp->next->prev = tmp->prev;
+        tmp->next=NULL;tmp->prev=NULL;
+        heap_ftr_mdata_t* ftr = tmp+HDR_SIZE+sz;
+        ftr->cur_hdr = tmp;
+        return tmp;
     }
     return NULL;
 }
@@ -149,7 +155,17 @@ void ph_free(uintptr_t ptr)
     
     heap_hdr_mdata_t* hdr = ptr-HDR_SIZE;
     hdr->free = true;
-    
+
+    if(hdr==HEAP_BEGIN) { // reset the free head
+        hdr->next=free_head;
+        free_head=hdr;
+        return;
+    }
+    // else
+    heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
+    heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
+    while(prev_hdr && hdr && prev_hdr)
+
     // combine consecutive free slots
     // heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
     // heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
