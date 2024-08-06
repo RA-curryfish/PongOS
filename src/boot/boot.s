@@ -32,8 +32,6 @@ stack_top:
 _start:
 	mov $stack_top, %esp
 	pushl %ebx # pointer to multiboot info
-	pushl $stack_bottom # pushing stack info
-	pushl $stack_top
 	pushl $heap_begin # pushing heap info
 	pushl $heap_end
 

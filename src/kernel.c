@@ -45,7 +45,7 @@ void load_binary()
 	// unsigned char* buf = ""; // read this buffer from a file in the HDD/Floppy?
 }
 
-void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, uintptr_t stack_top, uintptr_t stack_bottom, unsigned long* mbt) 
+void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
 {
 	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
 	k_heap_initialize(heap_begin, heap_end);
@@ -64,25 +64,15 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, uintptr_t stack_top, 
 
 	splash_screen();
 	
-	// char* s = (char*)ph_malloc(10);
-	// printf("s addr: %x\n", s);
-	// char* s1 = (char*)ph_malloc(20);
-	// printf("s1 addr: %x\n", s1);
-	// ph_free(s);
-	// char* s2 = (char*)ph_malloc(10);
-	// printf("s2 addr: %x\n", s2);
-	// ph_free(s2);
-	// s2 = (char*)ph_malloc(20);
-	// printf("s2 addr: %x\n", s2);
-	char* buf; uint16_t buf_len=512;
-	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	f->type = DEVICE;
-	printf("%x\n", f);
-	printf("%x\n", &f->type);
-	open(f);
-	read(f,&buf,1,buf_len);
-	ph_free(f);
-	for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
+	// char* buf; uint16_t buf_len=512;
+	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	// f->type = DEVICE;
+	// printf("%x\n", f);
+	// printf("%x\n", &f->type);
+	// open(f);
+	// read(f,&buf,1,buf_len);
+	// ph_free(f);
+	// for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
 
 	// busy loop
 	while(true){}
