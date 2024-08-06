@@ -13,8 +13,15 @@ Building my version of the BareBonesOS, a minimal OS built for the x86 architect
 - Paging enabled with 0-4MB being identity mapped, 1MB-2MB DMA, 4MB-32MB for user space
 - IDT set up to handle interrupts (hardware, KB, etc)
 - A terminal pops up, can type in the cmd line but can't use arrow keys
-- Floppy controller set up to read from a floppy image
-- Skeleton VFS created
+- Floppy controller set up to read from a floppy image and skeleton VFS created
+- A simple kernel heap allocator created
+
+## Building
+- You need to build a cross compiler for x86 arch. Download GCC and binutils and build them in a safe directory (away from system stuff)
+- https://wiki.osdev.org/GCC_Cross-Compiler shows how to do this
+- You may have to change the paths according/in the packer.sh script to make it run
+- The script is pretty self-explanatory. Once the set up is done accordingly, you can simply run it to produce an iso
+- To run this iso you need qemu, you can see how it is run in the script. Since this is a work in progress, giving too less of memory may cause the OS to crash
 
 ## Details
 Some details of certain concepts 
@@ -22,6 +29,7 @@ Some details of certain concepts
 ### Misc.
 - Remember to keep the kernel in some kind of a busy loop otherwise it will exit and you will spend a half a day trying to figure out why interrupts aren't working :)
 - 4kb = 0x1000, 64kb = 0x10000, 1mb = 0x100000, 4mb = 0x400000
+- Be careful while using uint (or use big enough uints) as loop variables as they loop back and won't terminate loops
 
 ### Interrupts
 There are three categories:
