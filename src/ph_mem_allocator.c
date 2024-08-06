@@ -85,7 +85,7 @@ static heap_hdr_mdata_t* free_head;
 
 uintptr_t ph_page_alloc()
 {
-    uintptr_t ret = NULL;
+    uintptr_t ret = (uintptr_t)NULL;
     uint8_t frame_num = 0;
     bool found = false;
     uint16_t i;
@@ -100,7 +100,7 @@ uintptr_t ph_page_alloc()
     }
     if(!found) return ret;
     mem_bitmap[i] = mem_bitmap[i] | (1<<frame_num);
-    ret = (uintptr_t*)(MEM_BASE_ADDR + (8*i + frame_num)*FRAME_SIZE);
+    ret = (uintptr_t)(MEM_BASE_ADDR + (8*i + frame_num)*FRAME_SIZE);
     return ret;
 }
 
@@ -120,18 +120,18 @@ uint8_t get_bitmap(uint8_t idx)
 void* ph_malloc(size_t sz)
 {
     heap_hdr_mdata_t* tmp = free_head;
-    while(tmp && (tmp+sz+HDR_SIZE+FTR_SIZE)<HEAP_END) { // go thru free list
+    while(tmp && (void*)((void*)tmp+sz+HDR_SIZE+FTR_SIZE)<HEAP_END) { // go thru free list
         if(tmp->size < sz) {
             tmp = tmp->next;
             continue;
         }
         else if(tmp->size > sz) { // split block
-            heap_hdr_mdata_t* new_free = tmp+HDR_SIZE+sz+FTR_SIZE;
+            heap_hdr_mdata_t* new_free = (void*)tmp+HDR_SIZE+sz+FTR_SIZE;
             new_free->free = true;
             new_free->prev=tmp->prev;
             new_free->next=tmp->next;
             new_free->size=tmp->size-sz-HDR_SIZE-FTR_SIZE;
-            heap_ftr_mdata_t* ftr=tmp+tmp->size;
+            heap_ftr_mdata_t* ftr=(void*)tmp+tmp->size;
             ftr->cur_hdr=new_free;
             
             tmp->size = sz;
@@ -145,9 +145,10 @@ void* ph_malloc(size_t sz)
         if(tmp->prev) tmp->prev->next = tmp->next;
         if(tmp->next) tmp->next->prev = tmp->prev;
         tmp->next=NULL;tmp->prev=NULL;
-        heap_ftr_mdata_t* ftr = tmp+HDR_SIZE+sz;
+        heap_ftr_mdata_t* ftr = (void*)tmp+HDR_SIZE+sz;
         ftr->cur_hdr = tmp;
-        return (void*)(tmp+HDR_SIZE);
+
+        return (void*)((void*)tmp+HDR_SIZE);
     }
     return NULL;
 }
@@ -156,27 +157,27 @@ void ph_free(uintptr_t ptr)
 {
     if(!ptr || ptr>HEAP_END || ptr<HEAP_BEGIN) return;
     
-    heap_hdr_mdata_t* hdr = ptr-HDR_SIZE;
+    heap_hdr_mdata_t* hdr = (void*)ptr-HDR_SIZE;
     hdr->free = true;
 
     // combine consecutive free slots
-    heap_ftr_mdata_t* prev_ftr = hdr-FTR_SIZE;
+    heap_ftr_mdata_t* prev_ftr = (void*)hdr-FTR_SIZE;
     heap_hdr_mdata_t* prev_hdr = prev_ftr->cur_hdr;
     while(prev_hdr && prev_hdr>=free_head && hdr && prev_hdr->free) {
         // prev chnk is free, combine chnks
         prev_hdr->next = hdr->next;
         prev_hdr->prev = hdr->prev;
-        heap_ftr_mdata_t* ftr = hdr+HDR_SIZE+hdr->size;
+        heap_ftr_mdata_t* ftr = (void*)hdr+HDR_SIZE+hdr->size;
         ftr->cur_hdr = prev_hdr;
         prev_hdr->size += hdr->size+HDR_SIZE+FTR_SIZE;
         
         // go backwards
         hdr=prev_hdr;
-        prev_ftr=hdr-FTR_SIZE;
+        prev_ftr=(void*)hdr-FTR_SIZE;
         prev_hdr=prev_ftr->cur_hdr;
     }
 
-    if(hdr==HEAP_BEGIN || hdr<free_head) { // reset the free head
+    if((uintptr_t)hdr==HEAP_BEGIN || hdr<free_head) { // reset the free head
         hdr->next=free_head;
         free_head=hdr;
         return;
@@ -205,16 +206,10 @@ void ph_mem_initialize(uintptr_t heap_beg, uintptr_t heap_end)
     
     // assign first free slot as entire heap
     HEAP_BEGIN = heap_beg; HEAP_END = heap_end;
-    heap_hdr_mdata_t* hdr = HEAP_BEGIN; hdr->next = NULL; hdr->prev = NULL;
+    heap_hdr_mdata_t* hdr = (uintptr_t)HEAP_BEGIN; hdr->next = NULL; hdr->prev = NULL;
     hdr->free = true;
     hdr->size = (size_t)(heap_end-heap_beg-HDR_SIZE-FTR_SIZE);
-    heap_ftr_mdata_t* ftr= HEAP_END - FTR_SIZE;
+    heap_ftr_mdata_t* ftr= (uintptr_t)(HEAP_END - FTR_SIZE);
     ftr->cur_hdr = hdr;
     free_head = hdr;
-    printf("hdr: %x\n",hdr);
-}
-
-void printvals()
-{
-    printf("freehd: %x\n",free_head);
 }

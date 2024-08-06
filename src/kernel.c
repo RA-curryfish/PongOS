@@ -42,7 +42,7 @@ void load_binary()
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, uintptr_t stack_top, uintptr_t stack_bottom, unsigned long* mbt) 
 {
 	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
-	// ph_mem_initialize(heap_begin,heap_end);
+	ph_mem_initialize(heap_begin,heap_end);
 	
 	memory_info_t* mem_info ; //= (memory_info_t*)ph_malloc(sizeof(memory_info_t))
 	mem_info->count = 0;
@@ -52,14 +52,16 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, uintptr_t stack_top, 
 	
 	splash_screen();
 	
-	ph_mem_initialize(heap_begin,heap_end);
-	printvals();
-	
 	char* s = (char*)ph_malloc(10);
-	printf("heap begin: %x\n",heap_begin);
-	printf("sizeof hdr  : %x\n",sizeof(heap_hdr_mdata_t));
-	printf("sizeof ftr  : %x\n",sizeof(heap_ftr_mdata_t));
-	printf("addr      : %x\n", s);	
+	printf("s addr: %x\n", s);
+	char* s1 = (char*)ph_malloc(20);
+	printf("s1 addr: %x\n", s1);
+	ph_free(s);
+	char* s2 = (char*)ph_malloc(10);
+	printf("s2 addr: %x\n", s2);
+	ph_free(s2);
+	s2 = (char*)ph_malloc(20);
+	printf("s2 addr: %x\n", s2);
 	// char* buf; uint16_t buf_len=512;
 	// file_t* f; f->type = DEVICE;
 	// printf("%x", f);
