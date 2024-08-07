@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #define FLAG_SET(x, flag) x |= (flag)
 #define FLAG_UNSET(x, flag) x &= ~(flag)
+#define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
 size_t strlen(const char *s);
 bool strcmp(const char *s1, const char *s2);

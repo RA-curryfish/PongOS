@@ -13,7 +13,6 @@
 #ifndef __i386__
 #error "not using x86 compiler??"
 #endif
-#define CHECK_FLAG(flags,bit)   ((flags) & (1 << (bit)))
 
 typedef struct memory_info {
 	uint8_t count;

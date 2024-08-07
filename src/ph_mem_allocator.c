@@ -231,8 +231,13 @@ void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
 void load_file(file_t* f)
 {
 	char* buf = (char*)ph_page_alloc();
-    uint16_t buf_len=1024;
+    uint16_t buf_len=FRAME_SIZE;
 	open(f);
 	read(f,buf,0,buf_len);
     printf(buf);
+
+    typedef void (*fptr)(void);
+    fptr ptr = (fptr)buf;
+    ptr();
+    printf("done\n");
 }
