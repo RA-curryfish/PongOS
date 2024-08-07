@@ -2,6 +2,7 @@
 #include "../asm_helper.h"
 #include <stdbool.h>
 #include "../drivers/terminal.h"
+#include "../libf.h"
 #define SECTORS_PER_TRACK 18
 #define RQM 0x80
 #define NDMA 0x20
@@ -228,7 +229,7 @@ void floppy_seek(chs_t chs)
     printstr("ERROR: FLOPPY SEEK\n");
 }
 
-int fpc_read(char** buf, size_t lba, size_t len)
+int fpc_read(char* buf, size_t lba, size_t len)
 {    
     // seek stuff 
     chs_t chs;
@@ -326,7 +327,7 @@ int fpc_read(char** buf, size_t lba, size_t len)
         error = 2; 
     }
     if(error==0) {    
-        *buf = floppy_dmabuf;
+        memcpy((void*)buf,(void*)floppy_dmabuf,len);
         return len;
     }
     return (error*(-1));

@@ -1,5 +1,6 @@
 #include "ph_mem_allocator.h"
 #include "libf.h"
+
 #define MEM_BASE_ADDR U_MEM_BASE
 #define MEM_END_ADDR 0x800000
 // const uint16_t mem_blk_arr_size = (1<<((uint32_t)MAX_MEM_BLOCK_LAYER+1))-1; // need 2047 len array
@@ -73,31 +74,40 @@
 
 static uintptr_t DMA_BEGIN;
 static uintptr_t DMA_END;
+static uintptr_t HEAP_BEGIN;
+static uintptr_t HEAP_END;
+static uintptr_t UMEM_BEGIN;
+static uintptr_t UMEM_END;
+static uint8_t UMEM_BITMAP_SZ;
+static uint8_t UMEM_BITMAP[128]; //max size of bitmap is 128 -> 128*8 = 1024 pages
 static size_t HDR_SIZE = sizeof(heap_hdr_mdata_t);
 static size_t FTR_SIZE = sizeof(heap_ftr_mdata_t);
 static heap_hdr_mdata_t* free_head;
+// 0000 0000 01 00 0000 0000 0000 0000 0000
+//      00     4      00          000       ===> 0x400000
 
-// uintptr_t ph_page_alloc()
-// {
-//     uintptr_t ret = (uintptr_t)NULL;
-//     uint8_t frame_num = 0;
-//     bool found = false;
-//     uint16_t i;
-//     for(i =0;i<mem_bitmap_sz;i++)
-//     {
-//         if((mem_bitmap[i]&(1<<frame_num)) == 0) {
-//             found = true;
-//             break;
-//         }
-//         if(frame_num==7) frame_num=255;
-//         frame_num++;
-//     }
-//     if(!found) return ret;
-//     mem_bitmap[i] = mem_bitmap[i] | (1<<frame_num);
-//     ret = (uintptr_t)(U_MEM_BEGIN + (8*i + frame_num)*FRAME_SIZE);
-//     return ret;
-// }
-
+uintptr_t ph_page_alloc()
+{
+    uintptr_t ret = (uintptr_t)NULL;
+    uint8_t frame_num = 0;
+    bool found = false;
+    uint16_t i;
+    for(i =0;i<UMEM_BITMAP_SZ;i++)
+    {
+        if((UMEM_BITMAP[i]&(1<<frame_num)) == 0) {
+            found = true;
+            break;
+        }
+        if(frame_num==7) frame_num=255;
+        frame_num++;
+    }
+    if(!found) return ret;
+    UMEM_BITMAP[i] = UMEM_BITMAP[i] | (1<<frame_num);
+    ret = (uintptr_t)(UMEM_BEGIN + (8*i + frame_num)*FRAME_SIZE);
+    // ideally should also map this page in the page table of the app
+    return ret;
+}
+// 
 // void ph_page_free(uintptr_t ptr)
 // {
 //     uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
@@ -105,7 +115,7 @@ static heap_hdr_mdata_t* free_head;
 //     frame_num = frame_num%8;
 //     mem_bitmap[idx] = mem_bitmap[idx] & ~(1<<frame_num);
 // }
-
+// 
 // uint8_t get_bitmap(uint8_t idx)
 // {
 //     return mem_bitmap[idx];
@@ -210,14 +220,19 @@ void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end)
 void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
 {
     DMA_BEGIN = dma_beg; DMA_END=DMA_BEGIN+0x100000-1; //1MB of DMA
-    U_MEM_BEGIN = u_mem_beg; U_MEM_END=U_MEM_BEGIN+0x2000000-1; //32MB of userspace
+    UMEM_BEGIN = u_mem_beg; UMEM_END=UMEM_BEGIN+0x2000000-1; //32MB of userspace
     memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE*16);
-    memset((void*)U_MEM_BEGIN, '\0',(size_t)FRAME_SIZE*16);
-
-    uint8_t mem_bitmap_sz = (uint32_t)(
-        (((uint32_t)U_MEM_END-(uint32_t)U_MEM_BEGIN)/(uint32_t)FRAME_SIZE)
+    memset((void*)UMEM_BEGIN, '\0',(size_t)FRAME_SIZE*16);
+    UMEM_BITMAP_SZ = (uint32_t)(
+        (((uint32_t)UMEM_END-(uint32_t)UMEM_BEGIN)/(uint32_t)FRAME_SIZE)
         /8); 
-uint8_t mem_bitmap[(uint32_t)(
-        (((uint32_t)U_MEM_END-(uint32_t)U_MEM_BEGIN)/(uint32_t)FRAME_SIZE)
-        /8)];
+}
+
+void load_file(file_t* f)
+{
+	char* buf = (char*)ph_page_alloc();
+    uint16_t buf_len=1024;
+	open(f);
+	read(f,buf,0,buf_len);
+    printf(buf);
 }

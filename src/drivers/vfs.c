@@ -14,7 +14,7 @@ void open(file_t* file)
     }
 }
 
-int read(file_t* file, char** buf, size_t offset, size_t len)
+int read(file_t* file, char* buf, size_t offset, size_t len)
 {
     int error = file->op.readfile(buf,offset,len);
     if(error<0) {

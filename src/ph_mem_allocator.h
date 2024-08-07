@@ -2,13 +2,8 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-
+#include "./drivers/vfs.h"
 #define FRAME_SIZE 0x1000
-
-static uintptr_t HEAP_BEGIN;
-static uintptr_t HEAP_END;
-static uintptr_t U_MEM_BEGIN;
-static uintptr_t U_MEM_END;
 
 // typedef struct mem_range {
 //     uint32_t start;
@@ -52,11 +47,13 @@ typedef struct heap_ftr_mdata {
 // Bitmap allocation
 // 1024 4KB pages -> 128 bytes
 // 2nd page in 1st byte -> (8*1 + 2)
+uintptr_t ph_page_alloc();
 void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end);
 void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg);
 // heap malloc for the kernel 
 void* ph_malloc(size_t sz);
 // frees single 4KB page
 void ph_free(uintptr_t ptr);
+void load_file(file_t* f);
 // for testing
 // uint8_t get_bitmap(uint8_t idx);

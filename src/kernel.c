@@ -40,19 +40,6 @@ uint8_t get_free_mem_region(memory_info_t* mem_info, uint8_t cnt)
 	return mem_info->count+1;
 }
 
-void load_binary()
-{
-	char* buf; uint16_t buf_len=512;
-	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	f->type = DEVICE;
-	open(f);
-	read(f,&buf,1,buf_len);
-	// for(uint16_t i=0;i<buf_len;i++) printchar(*(buf+i));
-	memcpy((void*)U_MEM_BEGIN,buf,buf_len);
-	printf(U_MEM_BEGIN);
-	ph_free((uintptr_t)f);
-}
-
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
 {
 	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
@@ -61,7 +48,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	mem_info->count = 0;
 	load_mem_info(mem_info,mbi); // use this info to store user memory being and end
 	
-	uint8_t dma_reg = get_free_mem_region(mem_info,0); // get first free region for DMA
+	uint8_t dma_reg = get_free_mem_region(mem_info,1); // get first free region for DMA after 1MB
 	if(dma_reg>mem_info->count) printf("No free regions\n");
 	uintptr_t dma_beg = mem_info->regions[dma_reg].addr;
 	uintptr_t u_mem_beg = dma_beg+0x300000; //hardcoding for now
@@ -71,8 +58,11 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	ph_free((uintptr_t)mem_info);
 
 	splash_screen();
-	
-	load_binary();
+
+	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	f->type = DEVICE;
+	load_file(f);
+	ph_free((uintptr_t)f);
 
 	// busy loop
 	while(true){}
