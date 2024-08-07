@@ -230,14 +230,22 @@ void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
 
 void load_file(file_t* f)
 {
-	char* buf = (char*)ph_page_alloc();
-    uint16_t buf_len=FRAME_SIZE;
+	char* buf = (char*)ph_page_alloc(); // return a vritual address here
+    char* buf_start = buf;
+    const uint16_t buf_len=512; // size of each block in floppy
+    uint16_t idx=0; // logical block address
+    size_t bytes_read=0, total_bytes_read=0;
 	open(f);
-	read(f,buf,0,buf_len);
-    printf(buf);
-
-    typedef void (*fptr)(void);
-    fptr ptr = (fptr)buf;
-    ptr();
+	do {
+        bytes_read = read(f,buf,idx++,buf_len);        
+        if(bytes_read<0) printf("PANIC\n");
+        total_bytes_read += bytes_read;
+        buf += buf_len; // contiguous allocation in virtual space
+    } while(bytes_read>0);
+    printf("\n%s\n",buf_start);
+    
+    // typedef void (*fptr)(void);
+    // fptr ptr = (fptr)buf;
+    // ptr();
     printf("done\n");
 }
