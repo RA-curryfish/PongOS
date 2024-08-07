@@ -6,11 +6,11 @@ PREFIX="$HOME/Academics/qemu/PongOS/opt/cross"
 CFLAGS="-std=gnu99 -ffreestanding -O2 -Wall -Wextra"
 which -- $ASM || PATH="$PREFIX/bin:$PATH"
 CFILES=$(find ./src -name "*.c")
-OFILES="boot.o"
+OFILES="./src/boot/boot.o"
 ASMFILES=$(find ./src -name "*.s")
 
 # creating boot assembled object
-$ASM $ASMFILES -o boot.o
+$ASM $ASMFILES -o ./src/boot/boot.o
 
 # creating kernel compiled object
 for file in $CFILES
@@ -29,6 +29,7 @@ grub-mkrescue -o pongos.iso ./src/isodir
 
 # clean object files in cur dir
 rm ./src/*.o
+rm ./src/boot/*.o
 rm ./src/drivers/*.o
 rm ./src/x86/*.o
 
