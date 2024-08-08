@@ -234,18 +234,19 @@ void load_file(file_t* f)
     char* buf_start = buf;
     const uint16_t buf_len=512; // size of each block in floppy
     uint16_t idx=0; // logical block address
-    size_t bytes_read=0, total_bytes_read=0;
+    size_t bytes_read=0, total_bytes_read=4096;
 	open(f);
 	do {
-        bytes_read = read(f,buf,idx++,buf_len);        
+        bytes_read = read(f,buf,idx++,buf_len);  // reads raw bytes      
         if(bytes_read<0) printf("PANIC\n");
-        total_bytes_read += bytes_read;
+        total_bytes_read -= bytes_read;
         buf += buf_len; // contiguous allocation in virtual space
-    } while(bytes_read>0);
-    printf("\n%s\n",buf_start);
-    
+    } while(total_bytes_read>0);
+    for(uint16_t i=0;i<804;i++)
+        printf("%c",buf_start[i]);
+
     // typedef void (*fptr)(void);
     // fptr ptr = (fptr)buf;
     // ptr();
-    printf("done\n");
+    printf("\ndone\n");
 }

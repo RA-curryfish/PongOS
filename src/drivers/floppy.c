@@ -327,9 +327,8 @@ int fpc_read(char* buf, size_t lba, size_t len)
         error = 2; 
     }
     if(error==0) {    
-        len = strlen(floppy_dmabuf);
         memcpy((void*)buf,(void*)floppy_dmabuf,len);
-        return len;
+        return len; // doesn't make sense
     }
     return (error*(-1));
 }
