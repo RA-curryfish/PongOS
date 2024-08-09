@@ -23,7 +23,7 @@ stack_top:
 
 .equ page_directory, __end_align_4k
 .equ page_table, __end_align_4k+0x1000
-.equ app_page_table, __end_align_4k+0x2000
+# .equ app_page_table, __end_align_4k+0x2000
 
 .section .text
 .include "src/boot/asm_macros.inc" # weird path because make is in diff path
@@ -39,8 +39,8 @@ _start:
 	SETUP_PD
 	mov $0, %eax
 	SETUP_PT <$page_table>
-	mov $0x400, %eax
-	SETUP_PT <$app_page_table>
+	# mov $0x400, %eax
+	# SETUP_PT <$app_page_table>
 
 	# enable paging
 	mov $page_directory, %eax

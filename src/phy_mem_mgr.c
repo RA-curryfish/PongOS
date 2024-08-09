@@ -1,8 +1,8 @@
-#include "ph_mem_allocator.h"
+#include "phy_mem_mgr.h"
 #include "libf.h"
 
-#define MEM_BASE_ADDR U_MEM_BASE
-#define MEM_END_ADDR 0x800000
+// #define MEM_BASE_ADDR U_MEM_BASE
+// #define MEM_END_ADDR 0x800000
 // const uint16_t mem_blk_arr_size = (1<<((uint32_t)MAX_MEM_BLOCK_LAYER+1))-1; // need 2047 len array
 // mem_block_node_t mem_blk_arr[(1<<((uint32_t)MAX_MEM_BLOCK_LAYER+1))-1]; // can be made into bool array?
 // // left child = 2*i+1,  right child = 2*i+2
@@ -86,7 +86,7 @@ static heap_hdr_mdata_t* free_head;
 // 0000 0000 01 00 0000 0000 0000 0000 0000
 //      00     4      00          000       ===> 0x400000
 
-uintptr_t ph_page_alloc()
+uintptr_t ph_frame_alloc()
 {
     uintptr_t ret = (uintptr_t)NULL;
     uint8_t frame_num = 0;
@@ -107,19 +107,19 @@ uintptr_t ph_page_alloc()
     // ideally should also map this page in the page table of the app
     return ret;
 }
-// 
-// void ph_page_free(uintptr_t ptr)
-// {
-//     uint16_t frame_num = (uint16_t)((uint16_t*)ptr-(uint16_t*)MEM_BASE_ADDR)/FRAME_SIZE;
-//     uint16_t idx = frame_num/8;
-//     frame_num = frame_num%8;
-//     mem_bitmap[idx] = mem_bitmap[idx] & ~(1<<frame_num);
-// }
-// 
-// uint8_t get_bitmap(uint8_t idx)
-// {
-//     return mem_bitmap[idx];
-// }
+
+void ph_page_free(uintptr_t frame)
+{
+    uint16_t frame_num = (uint16_t)((uint16_t*)frame-(uint16_t*)UMEM_BEGIN)/FRAME_SIZE;
+    uint16_t idx = frame_num/8;
+    frame_num = frame_num%8;
+    UMEM_BITMAP[idx] = UMEM_BITMAP[idx] & ~(1<<frame_num);
+}
+
+uint8_t get_bitmap(uint8_t idx)
+{
+    return UMEM_BITMAP[idx];
+}
 
 void* ph_malloc(size_t sz)
 {
@@ -226,27 +226,4 @@ void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
     UMEM_BITMAP_SZ = (uint32_t)(
         (((uint32_t)UMEM_END-(uint32_t)UMEM_BEGIN)/(uint32_t)FRAME_SIZE)
         /8); 
-}
-
-void load_file(file_t* f)
-{
-	char* buf = (char*)ph_page_alloc(); // return a vritual address here
-    char* buf_start = buf;
-    const uint16_t buf_len=512; // size of each block in floppy
-    uint16_t idx=0; // logical block address
-    size_t bytes_read=0, total_bytes_read=4096;
-	open(f);
-	do {
-        bytes_read = read(f,buf,idx++,buf_len);  // reads raw bytes      
-        if(bytes_read<0) printf("PANIC\n");
-        total_bytes_read -= bytes_read;
-        buf += buf_len; // contiguous allocation in virtual space
-    } while(total_bytes_read>0);
-    for(uint16_t i=0;i<804;i++)
-        printf("%c",buf_start[i]);
-
-    // typedef void (*fptr)(void);
-    // fptr ptr = (fptr)buf;
-    // ptr();
-    printf("\ndone\n");
 }

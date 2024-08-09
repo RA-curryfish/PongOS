@@ -9,6 +9,16 @@ load_page_dir:
     mov %ebp, %esp /* epilogue */
     pop %ebp
     ret
+.global get_cur_pd
+.type get_cur_pd, @function
+get_cur_pd:
+    push %ebp
+    mov %esp, %ebp
+    mov %cr3, %eax
+    push %eax # caller saved??
+    mov %ebp, %esp
+    pop %ebp
+    ret
 
 .global load_idt
 .type load_idt, @function

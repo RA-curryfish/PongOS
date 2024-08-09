@@ -12,7 +12,6 @@ bool strcmp(const char *s1, const char *s2);
 bool strcmp_cmd(const char *user_cmd, const char *cmd);
 void memset(void *dest, char c, size_t len);
 void memcpy(void *dest, void *source, size_t len);
-void* malloc(size_t sz);
 /*  binary search on structures
     Params:
     arr - array of sorted structs

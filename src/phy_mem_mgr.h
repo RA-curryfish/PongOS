@@ -47,13 +47,13 @@ typedef struct heap_ftr_mdata {
 // Bitmap allocation
 // 1024 4KB pages -> 128 bytes
 // 2nd page in 1st byte -> (8*1 + 2)
-uintptr_t ph_page_alloc();
+uintptr_t ph_frame_alloc();
+void ph_page_free(uintptr_t frame);
 void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end);
 void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg);
 // heap malloc for the kernel 
 void* ph_malloc(size_t sz);
 // frees single 4KB page
 void ph_free(uintptr_t ptr);
-void load_file(file_t* f);
 // for testing
 // uint8_t get_bitmap(uint8_t idx);
