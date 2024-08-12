@@ -52,28 +52,34 @@ disable_interrupts:
 switch_task:
     # eax,ecx,edx caller saved
     # eip is saved by 'call' inst
+    push %ebp
+    mov %esp, %ebp
+
     push %ebx
     push %esi
     push %edi
     push %ebp
-
-    mov 8(%ebp), %eax # move stack passed pd
-    vga_print_hex_4 <%eax>
-    vga_print_hex_4 <%ebx>
-    vga_print_hex_4 <%ecx>
-    vga_print_hex_4 <%edx>
     
-    /*mov %cr3, %ecx # save old pd val
-    mov %eax, %cr3 # load new pd
-    mov $0, %edx
-    cmp %ebx, %edx
-    jne .nocall
-    call *%ebx
+    mov %cr3, %ecx 
+    push %ecx # save old pd val
+    
+    mov 8(%ebp), %eax # copy new pd
+    mov $0, %ebx
+    VGA_PRINT_HEX_4 <%eax>
+    # mov %eax, %cr3 # load new pd
 
-    .nocall:*/
+    # call *%ebx
+
+
+    pop %eax # load old pd
+    mov %eax, %cr3
+
     pop %ebp
     pop %edi
     pop %esi
     pop %ebx
+    
+    mov %ebp, %esp
+    pop %ebp
 
     ret

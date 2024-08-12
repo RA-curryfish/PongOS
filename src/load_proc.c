@@ -19,23 +19,21 @@ void load(file_t* f)
     if(f->type == DEVICE ) { // add exe?
         uint32_t* pd = (uint32_t*)get_new_pd();
         uint32_t* pt = (uint32_t*)get_new_pt(); // in a loop maybe?
-        
-        pd[0] = (uint32_t*)pt | 7; // supervisor, r/w, present
+    
+        pd[0] = (uint32_t)pt | 7; // supervisor, r/w, present
         
         uint32_t* frame0 = (uint32_t*)ph_frame_alloc();
         uint32_t* frame1 = (uint32_t*)ph_frame_alloc();
         uint32_t* frame2 = (uint32_t*)ph_frame_alloc();
         uint32_t* frame3 = (uint32_t*)ph_frame_alloc();
-        pt[0] = frame0 | 7;
-        pt[1] = frame1 | 7;
-        pt[2] = frame2 | 7;
-        pt[3] = frame3 | 7;
-        printf("%x\n",pd);
-        printf("%x\n",pt);
-        printf("%x\n",pt[0]);
-        printf("%x\n",pt[1]);
+        pt[0] = (uint32_t)frame0 | 7;
+        pt[1] = (uint32_t)frame1 | 7;
+        pt[2] = (uint32_t)frame2 | 7;
+        pt[3] = (uint32_t)frame3 | 7;
+
         // copy device contents in allocated frames
-        char* buf = frame0; const uint16_t buf_len=512;
+        char* buf = frame0;  // convert pt[0], etc into phy addr
+        const uint16_t buf_len=512;
         size_t bytes_read=0, total_bytes_read=4096;
         uint16_t idx=0;
         open(f); 
@@ -49,7 +47,7 @@ void load(file_t* f)
         // - load the page dir
         // - call application function
         // - restore page dir
-        // switch_task(pd);
+        switch_task(pd);
     }
     else if(f->type == FILE) {
         // char* buf = (char*)virt_page_alloc(); // return a vritual address here
