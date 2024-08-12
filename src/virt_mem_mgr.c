@@ -16,24 +16,10 @@ void virt_page_free(void* page) // needed??
 
 void* malloc()
 {
-
+    return NULL;
 }
 
 void free(void* ptr)
 {
 
-}
-
-void* get_new_pd()
-{
-    return (void*)ph_frame_alloc();
-}
-
-void* get_new_pt()
-{
-    uint32_t* pt = (uint32_t*)ph_frame_alloc(); // allocate single page table, 4mb size VAS
-    for(uint16_t i=0;i<1024;i++) {
-        pt[i]= ph_frame_alloc() | 7; // returns 4KB aligned frame; user,r/w,present
-    }
-    return (void*)pt;
 }

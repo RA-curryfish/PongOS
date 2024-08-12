@@ -3,7 +3,7 @@
 #include "isr.h"
 #include "irq.h"
 #include "../drivers/driver_headers.h"
-#include "../ph_mem_allocator.h"
+#include "../phy_mem_mgr.h"
 
 void pg_fault()
 {

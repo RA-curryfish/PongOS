@@ -4,7 +4,8 @@
 #include "drivers/vfs.h"
 #include "drivers/terminal.h"
 #include "libf.h"
-#include "ph_mem_allocator.h"
+#include "phy_mem_mgr.h"
+#include "load_proc.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -46,7 +47,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	memory_info_t* mem_info = (memory_info_t*)ph_malloc(sizeof(memory_info_t));
 	mem_info->count = 0;
 	load_mem_info(mem_info,mbi); // use this info to store user memory being and end
-	
+		
 	uint8_t dma_reg = get_free_mem_region(mem_info,1); // get first free region for DMA after 1MB
 	if(dma_reg>mem_info->count) printf("No free regions\n");
 	uintptr_t dma_beg = mem_info->regions[dma_reg].addr;
@@ -60,7 +61,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 
 	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
 	f->type = DEVICE;
-	load_file(f);
+	load(f);
 	ph_free((uintptr_t)f);
 
 	// busy loop

@@ -51,6 +51,8 @@ uintptr_t ph_frame_alloc();
 void ph_page_free(uintptr_t frame);
 void k_heap_initialize(uintptr_t heap_beg, uintptr_t heap_end);
 void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg);
+void* get_new_pd();
+void* get_new_pt();
 // heap malloc for the kernel 
 void* ph_malloc(size_t sz);
 // frees single 4KB page

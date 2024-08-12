@@ -78,6 +78,7 @@ static uintptr_t HEAP_BEGIN;
 static uintptr_t HEAP_END;
 static uintptr_t UMEM_BEGIN;
 static uintptr_t UMEM_END;
+static uintptr_t K_PAGE_TABLE;
 static uint8_t UMEM_BITMAP_SZ;
 static uint8_t UMEM_BITMAP[128]; //max size of bitmap is 128 -> 128*8 = 1024 pages
 static size_t HDR_SIZE = sizeof(heap_hdr_mdata_t);
@@ -94,12 +95,13 @@ uintptr_t ph_frame_alloc()
     uint16_t i;
     for(i =0;i<UMEM_BITMAP_SZ;i++)
     {
-        if((UMEM_BITMAP[i]&(1<<frame_num)) == 0) {
-            found = true;
-            break;
+        for(frame_num=0;frame_num<=7;frame_num++) {
+            if((UMEM_BITMAP[i]&(1<<frame_num)) == 0) {
+                found = true;
+                break;
+            }
         }
-        if(frame_num==7) frame_num=255;
-        frame_num++;
+        if(found) break;
     }
     if(!found) return ret;
     UMEM_BITMAP[i] = UMEM_BITMAP[i] | (1<<frame_num);
@@ -119,6 +121,22 @@ void ph_page_free(uintptr_t frame)
 uint8_t get_bitmap(uint8_t idx)
 {
     return UMEM_BITMAP[idx];
+}
+
+void* get_new_pd()
+{
+    uint32_t* pd = (uint32_t*)ph_frame_alloc(); 
+    // *(pd+4*1023) = K_PAGE_TABLE | 7;
+    return (void*)pd;
+}
+
+void* get_new_pt()
+{
+    uint32_t* pt = (uint32_t*)ph_frame_alloc();
+    // for(uint16_t i=0;i<4;i++) { // allocate 16kb for now
+    //     pt[i]= ph_frame_alloc() | 7; // returns 4KB aligned frame; user,r/w,present
+    // }
+    return (void*)pt;
 }
 
 void* ph_malloc(size_t sz)
@@ -221,6 +239,7 @@ void ph_mem_initialize(uintptr_t dma_beg, uintptr_t u_mem_beg)
 {
     DMA_BEGIN = dma_beg; DMA_END=DMA_BEGIN+0x100000-1; //1MB of DMA
     UMEM_BEGIN = u_mem_beg; UMEM_END=UMEM_BEGIN+0x2000000-1; //32MB of userspace
+    // K_PAGE_TABLE = kpt;
     memset((void*)DMA_BEGIN, '\0',(size_t)FRAME_SIZE*16);
     memset((void*)UMEM_BEGIN, '\0',(size_t)FRAME_SIZE*16);
     UMEM_BITMAP_SZ = (uint32_t)(

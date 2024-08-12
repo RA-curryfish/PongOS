@@ -23,7 +23,7 @@ stack_top:
 
 .equ page_directory, __end_align_4k
 .equ page_table, __end_align_4k+0x1000
-# .equ app_page_table, __end_align_4k+0x2000
+.equ app_page_table, __end_align_4k+0x2000
 
 .section .text
 .include "src/boot/asm_macros.inc" # weird path because make is in diff path
@@ -34,13 +34,14 @@ _start:
 	pushl %ebx # pointer to multiboot info
 	pushl $heap_begin # pushing heap info
 	pushl $heap_end
+	# pushl $page_table
 
 	# Set up PD and PTs
 	SETUP_PD
 	mov $0, %eax
 	SETUP_PT <$page_table>
-	# mov $0x400, %eax
-	# SETUP_PT <$app_page_table>
+	mov $0x400, %eax
+	SETUP_PT <$app_page_table>
 
 	# enable paging
 	mov $page_directory, %eax

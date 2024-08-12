@@ -34,4 +34,4 @@ rm ./src/drivers/*.o
 rm ./src/x86/*.o
 
 # run it bruhh. Default is 128M. Anything <= 2M will not be able to boot
-qemu-system-i386 -cdrom pongos.iso -fda ./dev/fd0 -boot d -m 64M
+qemu-system-i386 -cdrom pongos.iso -fda ./dev/fd -boot d -m 64M
