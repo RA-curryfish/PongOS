@@ -32,6 +32,7 @@ Some details of certain concepts
 - Remember to keep the kernel in some kind of a busy loop otherwise it will exit and you will spend a half a day trying to figure out why interrupts aren't working :)
 - 4kb = 0x1000, 64kb = 0x10000, 1mb = 0x100000, 4mb = 0x400000
 - Be careful while using uint (or use big enough uints) as loop variables as they loop back and won't terminate loops
+- Keep pointer type in mind while incrementing (char* +4 is equivalent to int* +1)
 
 ### Interrupts
 There are three categories:
@@ -105,3 +106,6 @@ Links:
 - https://www.ardent-tool.com/floppy/Floppy_Programming.html
 - https://forum.osdev.org/viewtopic.php?t=13538
 - https://wiki.osdev.org/Floppy_Disk_Controller#st2
+
+### Multitasking
+The code for context switch (CS) needs to be in assembly to prevent the C compiler from adding function pro/epilogue. Some registers are saved by caller, the rest need to be saved by the CS. A new stack needs to be set up before CSing. The %esp will now point at the top of this new stack. You need to manually push values on stack that would be popped off by the CS code after changing the stack.
