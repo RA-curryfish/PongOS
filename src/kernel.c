@@ -47,7 +47,8 @@ uint8_t get_free_mem_region(memory_info_t* mem_info, uint8_t cnt)
 void foo()
 {
 	printf("testing\n");
-	
+	switch_task(task, kernel_task);
+	printf("wicked game\n");
 	switch_task(task, kernel_task);
 }
 
@@ -86,8 +87,9 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	task = (pcb*)ph_malloc(sizeof(pcb));
 	create_task(task,0,foo);
 	switch_task(kernel_task, task);
-
 	printf("i just knew too much\n");
+	switch_task(kernel_task, task);
+	printf("no iiiiiii dont wanna fall\n");
 
 	kernel_bsy_loop();
 }
