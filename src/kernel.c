@@ -6,6 +6,7 @@
 #include "libf.h"
 #include "phy_mem_mgr.h"
 #include "load_proc.h"
+#include "task.h"
 
 #ifdef __linux__
 #error "using linux??"
@@ -15,6 +16,7 @@
 #error "not using x86 compiler??"
 #endif
 
+pcb* kernel_task;
 typedef struct memory_info {
 	uint8_t count;
 	multiboot_memory_map_t regions[16];
@@ -56,6 +58,9 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	init_hal(dma_beg, u_mem_beg); // pass memory bounds for phy mem
 	
 	ph_free((uintptr_t)mem_info);
+
+	kernel_task = (pcb*)ph_malloc(sizeof(pcb));
+	init_kernel_task(kernel_task);
 
 	splash_screen();
 

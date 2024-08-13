@@ -1,8 +1,10 @@
 #include "load_proc.h"
 #include "phy_mem_mgr.h"
 #include "libf.h"
+#include "task.h"
 
-extern void __attribute__((cdecl)) switch_task(uint32_t* pd);
+extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
+extern pcb* kernel_task;
 void load_txt()
 {
 
@@ -47,7 +49,9 @@ void load(file_t* f)
         // - load the page dir
         // - call application function
         // - restore page dir
-        switch_task(pd);
+        pcb* task = (pcb*)ph_malloc(sizeof(pcb));
+        create_task(task, pd);
+        switch_task(kernel_task,task);
     }
     else if(f->type == FILE) {
         // char* buf = (char*)virt_page_alloc(); // return a vritual address here
