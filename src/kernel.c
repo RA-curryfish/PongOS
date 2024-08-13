@@ -17,6 +17,8 @@
 #endif
 
 pcb* kernel_task;
+pcb* task;
+extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
 typedef struct memory_info {
 	uint8_t count;
 	multiboot_memory_map_t regions[16];
@@ -42,6 +44,19 @@ uint8_t get_free_mem_region(memory_info_t* mem_info, uint8_t cnt)
 	return mem_info->count+1;
 }
 
+void foo()
+{
+	printf("testing\n");
+	
+	switch_task(task, kernel_task);
+}
+
+void kernel_bsy_loop()
+{
+	// busy loop
+	while(true){}
+}
+
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
 {
 	multiboot_info_t *mbi = (multiboot_info_t *)mbt;
@@ -64,11 +79,15 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 
 	splash_screen();
 
-	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	f->type = DEVICE;
-	load(f);
-	ph_free((uintptr_t)f);
+	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	// f->type = DEVICE;
+	// load(f);
+	// ph_free((uintptr_t)f);
+	task = (pcb*)ph_malloc(sizeof(pcb));
+	create_task(task,0,foo);
+	switch_task(kernel_task, task);
 
-	// busy loop
-	while(true){}
+	printf("i just knew too much\n");
+
+	kernel_bsy_loop();
 }

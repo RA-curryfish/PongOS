@@ -3,8 +3,6 @@
 #include "libf.h"
 #include "task.h"
 
-extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
-extern pcb* kernel_task;
 void load_txt()
 {
 
@@ -45,14 +43,6 @@ void load(file_t* f)
             total_bytes_read -= bytes_read;
             buf += buf_len; // ideally change frames after 4KB
         } while(total_bytes_read>0);
-        // switch task to application
-        // - load the page dir
-        // - call application function
-        // - restore page dir
-        pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-        // create_task(task, pd);
-        create_task(task, 0);
-        switch_task(kernel_task,task);
     }
     else if(f->type == FILE) {
         // char* buf = (char*)virt_page_alloc(); // return a vritual address here

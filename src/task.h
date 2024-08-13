@@ -15,4 +15,4 @@ typedef struct process_control_block {
 } pcb;
 
 void init_kernel_task(pcb* block);
-void create_task(pcb* block,uint32_t* pd);
+void create_task(pcb* block,uint32_t* pd, void(*func)());
