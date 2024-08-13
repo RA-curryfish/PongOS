@@ -19,19 +19,19 @@ void load(file_t* f)
 {
 	// f is either text file or executable
     if(f->type == DEVICE ) { // add exe?
-        uint32_t* pd = (uint32_t*)get_new_pd();
-        uint32_t* pt = (uint32_t*)get_new_pt(); // in a loop maybe?
+        // uint32_t* pd = (uint32_t*)get_new_pd();
+        // uint32_t* pt = (uint32_t*)get_new_pt(); // in a loop maybe?
     
-        pd[0] = (uint32_t)pt | 7; // supervisor, r/w, present
+        // pd[0] = (uint32_t)pt | 7; // supervisor, r/w, present
         
-        uint32_t* frame0 = (uint32_t*)ph_frame_alloc();
-        uint32_t* frame1 = (uint32_t*)ph_frame_alloc();
-        uint32_t* frame2 = (uint32_t*)ph_frame_alloc();
-        uint32_t* frame3 = (uint32_t*)ph_frame_alloc();
-        pt[0] = (uint32_t)frame0 | 7;
-        pt[1] = (uint32_t)frame1 | 7;
-        pt[2] = (uint32_t)frame2 | 7;
-        pt[3] = (uint32_t)frame3 | 7;
+        uint32_t* frame0 = (uint32_t*)ph_frame_alloc(); // 0x400000
+        uint32_t* frame1 = (uint32_t*)ph_frame_alloc(); // 0x401
+        uint32_t* frame2 = (uint32_t*)ph_frame_alloc(); // 0x402
+        uint32_t* frame3 = (uint32_t*)ph_frame_alloc(); // 0x403
+        // pt[0] = (uint32_t)frame0 | 7;
+        // pt[1] = (uint32_t)frame1 | 7;
+        // pt[2] = (uint32_t)frame2 | 7;
+        // pt[3] = (uint32_t)frame3 | 7;
 
         // copy device contents in allocated frames
         char* buf = frame0;  // convert pt[0], etc into phy addr
@@ -50,7 +50,8 @@ void load(file_t* f)
         // - call application function
         // - restore page dir
         pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-        create_task(task, pd);
+        // create_task(task, pd);
+        create_task(task, 0);
         switch_task(kernel_task,task);
     }
     else if(f->type == FILE) {
