@@ -5,13 +5,13 @@
 
 uint32_t* CUR_TASK_ADDR;
 
-void foo1()
+void task_end()
 {
     printf("ok");
     while(1);
 }
 
-void exch_tasks(uint32_t* task)
+void task_begin(uint32_t* task)
 {
     *CUR_TASK_ADDR = task;
 }
@@ -31,9 +31,9 @@ void setup_kstack(pcb* task, void(*func)(), uint32_t* stack_begin)
     uint32_t* stack_top = stack_begin;
 
     stack_top -= 1; *stack_top = (uint32_t)task; // param1 to exch tasks
-    stack_top -= 1; *stack_top = (uint32_t)foo1; // return address to foo1
+    stack_top -= 1; *stack_top = (uint32_t)task_end; // return address to task_end
     stack_top -= 1; *stack_top = (uint32_t)func; // return address to task
-    stack_top -= 1; *stack_top = (uint32_t)exch_tasks; // return address to exch tasks
+    stack_top -= 1; *stack_top = (uint32_t)task_begin; // return address to exch tasks
     stack_top -= 1; __asm__ __volatile__ ("mov %%ebx, %0" : "=r" (*stack_top)); // ebx
     stack_top -= 1; __asm__ __volatile__ ("mov %%esi, %0" : "=r" (*stack_top)); // esi
     stack_top -= 1; __asm__ __volatile__ ("mov %%edi, %0" : "=r" (*stack_top)); // edi
