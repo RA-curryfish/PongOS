@@ -13,7 +13,7 @@ void load_elf()
 
 }
 
-void load(file_t* f)
+void load(file_t* f, vas_t* vas)
 {
 	// f is either text file or executable
     if(f->type == DEVICE ) { // add exe?
@@ -22,27 +22,33 @@ void load(file_t* f)
     
         // pd[0] = (uint32_t)pt | 7; // supervisor, r/w, present
         
-        uint32_t* frame0 = (uint32_t*)ph_frame_alloc(); // 0x400000
-        uint32_t* frame1 = (uint32_t*)ph_frame_alloc(); // 0x401
-        uint32_t* frame2 = (uint32_t*)ph_frame_alloc(); // 0x402
-        uint32_t* frame3 = (uint32_t*)ph_frame_alloc(); // 0x403
+        vas->code_begin = (uint32_t*)ph_frame_alloc(); // 0x400000
+        vas->global_begin = (uint32_t*)ph_frame_alloc(); // 0x401
+        vas->heap_begin = (uint32_t*)ph_frame_alloc(); // 0x402
+        vas->stack_begin = (uint32_t*)ph_frame_alloc()+0x1000; // 0x404, because stack grows downwards
         // pt[0] = (uint32_t)frame0 | 7;
         // pt[1] = (uint32_t)frame1 | 7;
         // pt[2] = (uint32_t)frame2 | 7;
         // pt[3] = (uint32_t)frame3 | 7;
 
+        *(uint8_t*)vas->code_begin[0] = 0x55;
+        *(uint8_t*)vas->code_begin[1] = 0x89;
+        *(uint8_t*)vas->code_begin[2] = 0xe5;
+        *(uint8_t*)vas->code_begin[3] = 0xc9;
+        *(uint8_t*)vas->code_begin[4] = 0xc3;
         // copy device contents in allocated frames
-        char* buf = frame0;  // convert pt[0], etc into phy addr
-        const uint16_t buf_len=512;
-        size_t bytes_read=0, total_bytes_read=4096;
-        uint16_t idx=0;
-        open(f); 
-        do {
-            bytes_read = read(f,buf,idx++,buf_len);  // reads raw bytes      
-            if(bytes_read<0) printf("PANIC\n");
-            total_bytes_read -= bytes_read;
-            buf += buf_len; // ideally change frames after 4KB
-        } while(total_bytes_read>0);
+        // char* buf = vas->code_begin;  // convert pt[0], etc into phy addr
+        // const uint16_t buf_len=512;
+        // size_t bytes_read=0, total_bytes_read=4096;
+        // uint16_t idx=0;
+        // open(f); 
+        // do {
+        //     bytes_read = read(f,buf,idx++,buf_len);  // reads raw bytes      
+        //     if(bytes_read<0) printf("PANIC\n");
+        //     break;
+        //     total_bytes_read -= bytes_read;
+        //     buf += buf_len; // ideally change frames after 4KB
+        // } while(total_bytes_read>0);
     }
     else if(f->type == FILE) {
         // char* buf = (char*)virt_page_alloc(); // return a vritual address here

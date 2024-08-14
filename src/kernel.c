@@ -53,12 +53,6 @@ void foo()
 {
 	printf("testing\n");
 	switch_task(cur_task, cur_task->next_task);
-
-	printf("wicked game\n");
-	switch_task(cur_task, cur_task->next_task);
-
-	printf("until the ashes of eden fall\n");
-	switch_task(cur_task, cur_task->next_task);
 }
 
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
@@ -83,25 +77,23 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
 	cur_task = kernel_task;
 	init_kernel_task((uint32_t*)&cur_task, kernel_task);
-	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	// f->type = DEVICE;
-	// load(f);
-	// ph_free((uintptr_t)f);
+	
+	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	f->type = DEVICE;
+	vas_t* vas = (vas_t*)ph_malloc(sizeof(vas_t)); 
+	load(f,vas);
+	void(*func)() = (void (*)())vas->code_begin; //= (uint32_t*)foo;
+	ph_free((uintptr_t)f);
 
 	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-	create_task(task,kernel_task,0,foo);
+	create_task(task,kernel_task,0,func, vas->stack_begin);
 	
 	kernel_task->next_task = task;
 	
-	switch_task(kernel_task, kernel_task->next_task);
+	// switch_task(kernel_task, kernel_task->next_task);
+	printf("bruh");
 
-	printf("i just knew too much\n");
-	switch_task(kernel_task, kernel_task->next_task);
-	
-	printf("no iiiiiii dont wanna fall\n");
-	switch_task(kernel_task, kernel_task->next_task);
-	
-	printf("stayyy with me dont let mee goooooo\n");
-
+	ph_free(kernel_task);
+	ph_free(task);
 	kernel_bsy_loop();
 }

@@ -2,11 +2,10 @@
 Building my version of the BareBonesOS, a minimal OS built for the x86 architecture. Making the game 'Pong' on it, and coding in assembly and freestanding C (C without stdlib), and learning concepts in computer architecture, operating systems, linkers/loaders and so on.
 
 ## Milestones
-- Create a binary, store on floppy, and then run it 
+- Create a binary, store on floppy, and then run it as a task (Launching applications)
 - Create a file system parser (FAT16?) and read from floppy
-- Launching applications (WIP - text app, Pong app)
 - Basic terminal to type in commands and interact with the OS (fixing small bugs)
-- Handle phy and virtual memory management (can improve)
+- Improve phy and virtual memory management
 - ....
 
 ## Progress
@@ -15,8 +14,9 @@ Building my version of the BareBonesOS, a minimal OS built for the x86 architect
 - IDT set up to handle interrupts (hardware, KB, etc)
 - A terminal pops up, can type in the cmd line but can't use arrow keys
 - Floppy controller set up and skeleton VFS created
-- A simple kernel heap allocator created
-- Can load data from floppy to memory and jump to that location (running a binary)
+- A simple kernel heap allocator and frame allocator created
+- Can load data from floppy to memory and jump to that location (running a binary??)
+- Can context switch between kernel and another process/task in the same VAS
 
 ## Building
 - You need to build a cross compiler for x86 arch. Download GCC and binutils and build them in a safe directory (away from system stuff)

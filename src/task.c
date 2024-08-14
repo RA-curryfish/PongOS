@@ -1,6 +1,7 @@
 #include "task.h"
 #include <stddef.h>
 #include "libf.h"
+#include "virt_mem_mgr.h" 
 
 uint32_t* CUR_TASK_ADDR;
 
@@ -18,10 +19,10 @@ void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task)
     CUR_TASK_ADDR = cur_task_addr;
 }
 
-void setup_kstack(pcb* task, void(*func)())
+void setup_kstack(pcb* task, void(*func)(), uint32_t* stack_begin)
 {
     // uint32_t* stack_bottom = (uint32_t*)0x403000; // 4th frame, hardcode
-    uint32_t* stack_top = (uint32_t*)0x404000;
+    uint32_t* stack_top = stack_begin;
 
     stack_top -= 1; *stack_top = (uint32_t)task; // param1 to exch tasks
     stack_top -= 1; *stack_top = (uint32_t)func; // return address to task
@@ -34,9 +35,10 @@ void setup_kstack(pcb* task, void(*func)())
     task->kernel_sp = stack_top;
 }
 
-void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)())
+void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)(), uint32_t* stack_begin)
 {
-    setup_kstack(new_task, func);
+    setup_kstack(new_task, func, stack_begin);
+    printf("%x %x %x %x %x\n", *(uint8_t*)func, *(uint8_t*)func+1, *(uint8_t*)func+2, *(uint8_t*)func+3, *(uint8_t*)func+4);
     new_task->pd = pd;
     new_task->next_task = next_task;
     new_task->task_state = STOPPED;
