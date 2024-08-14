@@ -82,7 +82,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 
 	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
 	cur_task = kernel_task;
-	init_kernel_task(&cur_task, kernel_task);
+	init_kernel_task((uint32_t*)&cur_task, kernel_task);
 	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
 	// f->type = DEVICE;
 	// load(f);
@@ -91,7 +91,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
 	create_task(task,kernel_task,0,foo);
 	
-	cur_task->next_task = task;
+	kernel_task->next_task = task;
 	
 	switch_task(kernel_task, kernel_task->next_task);
 

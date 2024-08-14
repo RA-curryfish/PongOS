@@ -108,4 +108,16 @@ Links:
 - https://wiki.osdev.org/Floppy_Disk_Controller#st2
 
 ### Multitasking
-The code for context switch (CS) needs to be in assembly to prevent the C compiler from adding function pro/epilogue. Some registers are saved by caller, the rest need to be saved by the CS. A new stack needs to be set up before CSing. The %esp will now point at the top of this new stack. You need to manually push values on stack that would be popped off by the CS code after changing the stack.
+The code for context switch (CS) needs to be in assembly to prevent the C compiler from adding function pro/epilogue. Some registers are saved by caller, the rest need to be saved by the CS. A new stack needs to be set up before CSing. The %esp will now point at the top of this new stack. You need to manually push values on stack that would be popped off by the CS code after changing the stack. Also, if you want to call another function (before calling the task function), add the second return address as well and any other parameter the function takes on the stack too. For example, my stack looks like this: 
+
+| Meaning | Address | Value  | Name       |
+| ------- | ------- | ------ | ---------- |
+| esp     | 3fe4    | 216FBC | ebp val    |
+|         | 3fe8    | 0      | edi        |
+|         | 3fec    | 207034 | esi        |
+|         | 3ff0    | 207034 | ebx        |
+| ret1    | 3ff4    | 200BB0 | exch_tasks |
+| ret2    | 3ff8    | 207034 | func       |
+| param1  | 3ffc    | 2043f0 | task       |
+
+'func' is the entry function of the task, 'exch_tasks' updates the current task to the new task and takes the parameter 'task'. esp is the top of stack when CS occurs. There can be another function after 'task' that is a general wind down function.
