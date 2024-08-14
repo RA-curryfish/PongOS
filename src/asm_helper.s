@@ -64,7 +64,7 @@ switch_task:
     mov 24(%esp), %esi # PCB of new task
     
     mov (%esi), %esp # load new sp
-    mov 4(%esi), %eax # load new PD
+    # mov 4(%esi), %eax # load new PD
 
     # mov %eax, %cr3 # load new VAS
 

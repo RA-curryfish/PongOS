@@ -16,9 +16,8 @@
 #error "not using x86 compiler??"
 #endif
 
-pcb* kernel_task;
-pcb* task;
-extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
+pcb* cur_task;
+
 typedef struct memory_info {
 	uint8_t count;
 	multiboot_memory_map_t regions[16];
@@ -44,18 +43,22 @@ uint8_t get_free_mem_region(memory_info_t* mem_info, uint8_t cnt)
 	return mem_info->count+1;
 }
 
-void foo()
-{
-	printf("testing\n");
-	switch_task(task, kernel_task);
-	printf("wicked game\n");
-	switch_task(task, kernel_task);
-}
-
 void kernel_bsy_loop()
 {
 	// busy loop
 	while(true){}
+}
+
+void foo()
+{
+	printf("testing\n");
+	switch_task(cur_task, cur_task->next_task);
+
+	printf("wicked game\n");
+	switch_task(cur_task, cur_task->next_task);
+
+	printf("until the ashes of eden fall\n");
+	switch_task(cur_task, cur_task->next_task);
 }
 
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
@@ -69,27 +72,36 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	uint8_t dma_reg = get_free_mem_region(mem_info,1); // get first free region for DMA after 1MB
 	if(dma_reg>mem_info->count) printf("No free regions\n");
 	uintptr_t dma_beg = mem_info->regions[dma_reg].addr;
-	uintptr_t u_mem_beg = dma_beg+0x300000; //hardcoding for now
+	uintptr_t u_mem_beg = dma_beg+0x300000; // hardcoding for now
 	
 	init_hal(dma_beg, u_mem_beg); // pass memory bounds for phy mem
 	
 	ph_free((uintptr_t)mem_info);
 
-	kernel_task = (pcb*)ph_malloc(sizeof(pcb));
-	init_kernel_task(kernel_task);
-
 	splash_screen();
 
+	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
+	cur_task = kernel_task;
+	init_kernel_task(&cur_task, kernel_task);
 	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
 	// f->type = DEVICE;
 	// load(f);
 	// ph_free((uintptr_t)f);
-	task = (pcb*)ph_malloc(sizeof(pcb));
-	create_task(task,0,foo);
-	switch_task(kernel_task, task);
+
+	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
+	create_task(task,kernel_task,0,foo);
+	
+	cur_task->next_task = task;
+	
+	switch_task(kernel_task, kernel_task->next_task);
+
 	printf("i just knew too much\n");
-	switch_task(kernel_task, task);
+	switch_task(kernel_task, kernel_task->next_task);
+	
 	printf("no iiiiiii dont wanna fall\n");
+	switch_task(kernel_task, kernel_task->next_task);
+	
+	printf("stayyy with me dont let mee goooooo\n");
 
 	kernel_bsy_loop();
 }

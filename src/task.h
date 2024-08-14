@@ -2,9 +2,9 @@
 #include <stdint.h>
 
 typedef enum process_state {
-STOPPED,
-RUNNING,
-WAIING,
+    STOPPED,
+    RUNNING,
+    WAIING,
 }state;
 
 typedef struct process_control_block {
@@ -14,5 +14,6 @@ typedef struct process_control_block {
     state task_state;
 } pcb;
 
-void init_kernel_task(pcb* block);
-void create_task(pcb* block,uint32_t* pd, void(*func)());
+void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task);
+void create_task(pcb* new_task,pcb* next_task,uint32_t* pd, void(*func)());
+extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
