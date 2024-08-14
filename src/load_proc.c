@@ -31,17 +31,20 @@ void load(file_t* f, vas_t* vas)
         // pt[2] = (uint32_t)frame2 | 7;
         // pt[3] = (uint32_t)frame3 | 7;
 
-        // *(uint8_t*)vas->code_begin = 0x55;
+        // code that enters and exits a functio
+        // *((uint8_t*)vas->code_begin) = 0x55;
         // *(((uint8_t*)vas->code_begin)+1) = 0x89;
         // *(((uint8_t*)vas->code_begin)+2) = 0xe5;
         // *(((uint8_t*)vas->code_begin)+3) = 0xc9;
         // *(((uint8_t*)vas->code_begin)+4) = 0xc3;
 
+        // code to infinite loop
         *(uint8_t*)vas->code_begin = 0xe9;
         *(((uint8_t*)vas->code_begin)+1) = 0x00;
-        *(((uint8_t*)vas->code_begin)+2) = 0x00;
+        *(((uint8_t*)vas->code_begin)+2) = 0x40;
         *(((uint8_t*)vas->code_begin)+3) = 0x00;
         *(((uint8_t*)vas->code_begin)+4) = 0x00;
+        
         // copy device contents in allocated frames
         // char* buf = vas->code_begin;  // convert pt[0], etc into phy addr
         // const uint16_t buf_len=512;
