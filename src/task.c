@@ -7,12 +7,13 @@ uint32_t* CUR_TASK_ADDR;
 
 void task_end()
 {
-    printf("ok");
+    printf("TASK END\n");
     while(1);
 }
 
 void task_begin(uint32_t* task)
 {
+    printf("TASK BEGIN\n");
     *CUR_TASK_ADDR = task;
 }
 
@@ -25,10 +26,10 @@ void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task)
     CUR_TASK_ADDR = cur_task_addr;
 }
 
-void setup_kstack(pcb* task, void(*func)(), uint32_t* stack_begin)
+void setup_kstack(pcb* task, void(*func)(), uint8_t* stack_begin)
 {
     // uint32_t* stack_bottom = (uint32_t*)0x403000; // 4th frame, hardcode
-    uint32_t* stack_top = stack_begin;
+    uint32_t* stack_top = (uint32_t*)stack_begin;
 
     stack_top -= 1; *stack_top = (uint32_t)task; // param1 to exch tasks
     stack_top -= 1; *stack_top = (uint32_t)task_end; // return address to task_end
@@ -42,10 +43,9 @@ void setup_kstack(pcb* task, void(*func)(), uint32_t* stack_begin)
     task->kernel_sp = stack_top;
 }
 
-void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)(), uint32_t* stack_begin)
+void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)(), uint8_t* stack_begin)
 {
     setup_kstack(new_task, func, stack_begin);
-    printf("%x %x %x %x %x \n", *(((uint8_t*)func)), *(((uint8_t*)func)+1), *(((uint8_t*)func)+2), *(((uint8_t*)func)+3), *(((uint8_t*)func)+4) );
     new_task->pd = pd;
     new_task->next_task = next_task;
     new_task->task_state = STOPPED;

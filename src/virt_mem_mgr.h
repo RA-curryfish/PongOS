@@ -5,10 +5,10 @@
 #define PAGE_SIZE 0x1000
 
 typedef struct virtual_addr_space {
-    uint32_t* code_begin; //1 page each
-    uint32_t* global_begin; 
-    uint32_t* heap_begin;
-    uint32_t* stack_begin;
+    uint8_t* code_begin; //1 page each
+    uint8_t* global_begin; 
+    uint8_t* heap_begin;
+    uint8_t* stack_begin;
 } vas_t;
 void* get_new_pt();
 void* malloc();

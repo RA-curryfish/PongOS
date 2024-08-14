@@ -60,7 +60,7 @@ static volatile uint8_t floppy_state=0;
 static volatile bool floppy_irq_done = false;
 
 // set DMA in a 1:1 mapped area :) (maybe 1MB-2MB) 
-static char* floppy_dmabuf;
+static unsigned char* floppy_dmabuf;
 void floppy_dma_init(bool rw, uint16_t len)
 {
     union { 
@@ -189,7 +189,7 @@ void fpc_configure()
     // no result, no irq
 }
 
-void fpc_init(char* dmabuf)
+void fpc_init(unsigned char* dmabuf)
 {   
     fpc_reset();
     fpc_irq_wait();
@@ -229,7 +229,7 @@ void floppy_seek(chs_t chs)
     printstr("ERROR: FLOPPY SEEK\n");
 }
 
-int fpc_read(char* buf, size_t lba, size_t len)
+int fpc_read(unsigned char* buf, size_t lba, size_t len)
 {    
     // seek stuff 
     chs_t chs;
@@ -327,13 +327,13 @@ int fpc_read(char* buf, size_t lba, size_t len)
         error = 2; 
     }
     if(error==0) {    
-        memcpy((void*)buf,(void*)floppy_dmabuf,len);
+        memcpy((void*)buf,(void*)floppy_dmabuf,len);        
         return len; // doesn't make sense
     }
     return (error*(-1));
 }
 
-int fpc_write(char* buf, size_t lba, size_t len)
+int fpc_write(unsigned char* buf, size_t lba, size_t len)
 {
     return 0;
 }

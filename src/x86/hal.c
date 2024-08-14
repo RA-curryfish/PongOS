@@ -43,5 +43,5 @@ void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg)
     // Initialize terminal
 	terminal_initialize();
     // init floppy driver
-    fpc_init((char*)dma_beg);
+    fpc_init((unsigned char*)dma_beg);
 }

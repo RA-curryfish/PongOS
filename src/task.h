@@ -15,5 +15,5 @@ typedef struct process_control_block {
 } pcb;
 
 void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task);
-void create_task(pcb* new_task,pcb* next_task,uint32_t* pd, void(*func)(), uint32_t* stack_begin);
+void create_task(pcb* new_task,pcb* next_task,uint32_t* pd, void(*func)(), uint8_t* stack_begin);
 extern void __attribute__((cdecl)) switch_task(pcb* old, pcb* new);
