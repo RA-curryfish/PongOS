@@ -2,6 +2,6 @@
 
 void foo()
 {
-	uint8_t a=10;
+	while(1);
 }
 

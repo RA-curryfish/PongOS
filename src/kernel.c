@@ -82,11 +82,11 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	f->type = DEVICE;
 	vas_t* vas = (vas_t*)ph_malloc(sizeof(vas_t)); 
 	load(f,vas);
-	void(*func)() = (void (*)())vas->code_begin; //= (uint32_t*)foo;
+
 	ph_free((uintptr_t)f);
 
 	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-	create_task(task,kernel_task,0,func, vas->stack_begin);
+	create_task(task,kernel_task,0, (void (*)())vas->code_begin, vas->stack_begin);
 	
 	kernel_task->next_task = task;
 	

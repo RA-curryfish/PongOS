@@ -25,17 +25,23 @@ void load(file_t* f, vas_t* vas)
         vas->code_begin = (uint32_t*)ph_frame_alloc(); // 0x400000
         vas->global_begin = (uint32_t*)ph_frame_alloc(); // 0x401
         vas->heap_begin = (uint32_t*)ph_frame_alloc(); // 0x402
-        vas->stack_begin = (uint32_t*)ph_frame_alloc()+0x1000; // 0x404, because stack grows downwards
+        vas->stack_begin = (uint32_t*)ph_frame_alloc()+0x400; // 0x404, because stack grows downwards, 0x400 instead of 0x1000 because increments in 4
         // pt[0] = (uint32_t)frame0 | 7;
         // pt[1] = (uint32_t)frame1 | 7;
         // pt[2] = (uint32_t)frame2 | 7;
         // pt[3] = (uint32_t)frame3 | 7;
 
-        *(uint8_t*)vas->code_begin[0] = 0x55;
-        *(uint8_t*)vas->code_begin[1] = 0x89;
-        *(uint8_t*)vas->code_begin[2] = 0xe5;
-        *(uint8_t*)vas->code_begin[3] = 0xc9;
-        *(uint8_t*)vas->code_begin[4] = 0xc3;
+        // *(uint8_t*)vas->code_begin = 0x55;
+        // *(((uint8_t*)vas->code_begin)+1) = 0x89;
+        // *(((uint8_t*)vas->code_begin)+2) = 0xe5;
+        // *(((uint8_t*)vas->code_begin)+3) = 0xc9;
+        // *(((uint8_t*)vas->code_begin)+4) = 0xc3;
+
+        *(uint8_t*)vas->code_begin = 0xe9;
+        *(((uint8_t*)vas->code_begin)+1) = 0x00;
+        *(((uint8_t*)vas->code_begin)+2) = 0x00;
+        *(((uint8_t*)vas->code_begin)+3) = 0x00;
+        *(((uint8_t*)vas->code_begin)+4) = 0x00;
         // copy device contents in allocated frames
         // char* buf = vas->code_begin;  // convert pt[0], etc into phy addr
         // const uint16_t buf_len=512;

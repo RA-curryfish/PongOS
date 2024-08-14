@@ -38,7 +38,7 @@ void setup_kstack(pcb* task, void(*func)(), uint32_t* stack_begin)
 void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)(), uint32_t* stack_begin)
 {
     setup_kstack(new_task, func, stack_begin);
-    printf("%x %x %x %x %x\n", *(uint8_t*)func, *(uint8_t*)func+1, *(uint8_t*)func+2, *(uint8_t*)func+3, *(uint8_t*)func+4);
+    printf("%x %x %x %x %x \n", *(((uint8_t*)func)), *(((uint8_t*)func)+1), *(((uint8_t*)func)+2), *(((uint8_t*)func)+3), *(((uint8_t*)func)+4) );
     new_task->pd = pd;
     new_task->next_task = next_task;
     new_task->task_state = STOPPED;
