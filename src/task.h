@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 typedef enum process_state {
-    STOPPED,
+    STOPPED=0,
     RUNNING,
     WAIING,
 }state;

@@ -52,7 +52,13 @@ void kernel_bsy_loop()
 void foo()
 {
 	printf("testing\n");
-	switch_task(cur_task, cur_task->next_task);
+	 uint32_t ebp,esp;
+    __asm__ __volatile__ ("mov %%ebp, %0" : "=r" (ebp));
+    __asm__ __volatile__ ("mov %%esp, %0" : "=r" (esp));
+    printf("foo ebp %x\n", ebp);
+    printf("foo esp %x\n", esp);
+	// while(1);
+	// switch_task(cur_task, cur_task->next_task);
 }
 
 void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt) 
@@ -62,36 +68,35 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	memory_info_t* mem_info = (memory_info_t*)ph_malloc(sizeof(memory_info_t));
 	mem_info->count = 0;
 	load_mem_info(mem_info,mbi); // use this info to store user memory being and end
-		
 	uint8_t dma_reg = get_free_mem_region(mem_info,1); // get first free region for DMA after 1MB
 	if(dma_reg>mem_info->count) printf("No free regions\n");
 	uintptr_t dma_beg = mem_info->regions[dma_reg].addr;
 	uintptr_t u_mem_beg = dma_beg+0x300000; // hardcoding for now
+	ph_free((uintptr_t)mem_info);
 	
 	init_hal(dma_beg, u_mem_beg); // pass memory bounds for phy mem
 	
-	ph_free((uintptr_t)mem_info);
-
 	splash_screen();
 
 	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
+	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
 	cur_task = kernel_task;
 	init_kernel_task((uint32_t*)&cur_task, kernel_task);
 	
-	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	f->type = DEVICE;
-	vas_t* vas = (vas_t*)ph_malloc(sizeof(vas_t)); 
-	load(f,vas);
+	// file_t* f = (file_t*)ph_malloc(sizeof(file_t));
+	// f->type = DEVICE;
+	// vas_t* vas = (vas_t*)ph_malloc(sizeof(vas_t)); 
+	// load(f,vas);
+	// ph_free((uintptr_t)f);
 
-	ph_free((uintptr_t)f);
-
-	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-	create_task(task,kernel_task,0, (void (*)())vas->code_begin, vas->stack_begin);
+	// create_task(task,kernel_task,0, (void (*)())vas->code_begin, vas->stack_begin);
+	create_task(task,kernel_task,0, foo, (uint8_t*)0x404000);
 	
 	kernel_task->next_task = task;
-	
+	// printf("kernel task %x\n", kernel_task);
+	// printf("task %x\n", task);
+	// printf("cur task addr %x\n", &cur_task);
 	switch_task(kernel_task, kernel_task->next_task);
-	printf("bruh");
 
 	ph_free((uintptr_t)kernel_task);
 	ph_free((uintptr_t)task);

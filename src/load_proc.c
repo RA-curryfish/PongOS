@@ -48,16 +48,20 @@ void load(file_t* f, vas_t* vas)
         // copy device contents in allocated frames
         unsigned char* buf = vas->code_begin;  // convert pt[0], etc into phy addr
         const uint16_t buf_len=512;
-        int bytes_read=0, total_bytes_read=512;
+        int bytes_read=0, total_bytes_read=0x1000;
         uint16_t idx=0;
         open(f); 
         do {
             bytes_read = read(f,buf,idx++,buf_len);  // reads raw bytes      
             if(bytes_read<0) printf("PANIC\n");
-            break;
             total_bytes_read -= bytes_read;
             buf += buf_len; // ideally change frames after 4KB
         } while(total_bytes_read>0);
+        
+        // for(int i=0x400000;i<=(int)buf;i++){
+        //     if(*(unsigned char*)i != 0x00)
+        //         printf("%x ", *(unsigned char*)i);
+        // }
     }
     else if(f->type == FILE) {
         // char* buf = (char*)virt_page_alloc(); // return a vritual address here
