@@ -89,12 +89,9 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	load(f,vas);
 	ph_free((uintptr_t)f);
 	create_task(task,kernel_task,0, (void (*)())vas->code_begin, vas->stack_begin);
-	// create_task(task,kernel_task,0, foo, (uint8_t*)0x404000);
 	
 	kernel_task->next_task = task;
-	// printf("kernel task %x\n", kernel_task);
-	// printf("task %x\n", task);
-	// printf("cur task addr %x\n", &cur_task);
+
 	switch_task(kernel_task, kernel_task->next_task);
 
 	ph_free((uintptr_t)kernel_task);

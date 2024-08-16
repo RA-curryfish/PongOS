@@ -12,7 +12,7 @@ void pg_fault(registers* regs)
 {
 	// printf("%x",*(uint32_t*)regs->eip);
     // printf("\n%x %x %x\n", regs->eip, regs->esp, regs->ebp);
-    printstr("PAGE FULT");
+    printf("PAGE FULT");
     panic();
 	// handle adding page to the page table etc here
 	// uintptr_t* ptr = ph_malloc();

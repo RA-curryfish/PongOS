@@ -13,15 +13,8 @@ void task_end()
 
 void task_begin(uint32_t* task)
 {
-    // uint32_t eip;
-    // __asm__ volatile ("call 1f \n\t"
-    //          "1: pop %0" : "=r"(eip));
-    // printf("eip %x\n", eip);
     printf("TASK BEGIN\n");
-    *CUR_TASK_ADDR = task; 
-    // __asm__ __volatile__ ("mov %%esp, %0" : "=r" (esp));
-    // printf("esp %x\n", esp);   
-    // while(1);
+    *CUR_TASK_ADDR = task;   
 }
 
 void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task)
@@ -45,14 +38,8 @@ void setup_kstack(pcb* task, void(*task_entry)(), uint8_t* stack_begin)
     stack_top -= 1; __asm__ __volatile__ ("mov %%esi, %0" : "=r" (*stack_top)); // esi
     stack_top -= 1; __asm__ __volatile__ ("mov %%edi, %0" : "=r" (*stack_top)); // edi
     stack_top -= 1; __asm__ __volatile__ ("mov %%ebp, %0" : "=r" (*stack_top)); // ebp
-    // stack_top -= 1; *stack_top = (uint32_t*)stack_begin; // ebp
 
     task->kernel_sp = stack_top;
-    
-    // for(uint32_t* i=stack_top;i<stack_begin;i++)
-    // {
-    //     printf("%x : %x\n",i,*i);
-    // }
 }
 
 void create_task(pcb* new_task, pcb* next_task, uint32_t* pd, void(*func)(), uint8_t* stack_begin)

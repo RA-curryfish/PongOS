@@ -1,6 +1,6 @@
 #include "irq.h"
 #include "pic.h"
-#include "../drivers/terminal.h"
+#include "../libf.h"
 
 #define PIC_OFFSET 0x20 // start at 32 in the Interrupt table
 
@@ -18,7 +18,7 @@ void irq_handler_func(registers* regs)
     if(irq_handlers[irq] != NULL)
         irq_handlers[irq](regs);
     else
-        printstr("unhandled IRQ\n");
+        printf("unhandled IRQ\n");
     
     pic_end_interrupt(irq);    
 }

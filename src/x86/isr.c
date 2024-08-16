@@ -1,7 +1,7 @@
 #include "isr.h"
 #include "idt.h"
 #include <stddef.h>
-#include "../drivers/terminal.h"
+#include "../libf.h"
 
 isr_handler isr_handlers[256];
 
@@ -56,9 +56,9 @@ void __attribute__((cdecl)) isr_handler_func(registers* regs)
     if(isr_handlers[regs->interrupt] != NULL) 
         isr_handlers[regs->interrupt](regs); // call isr with regs as param
     else if(regs->interrupt >= 32)
-        printstr("UNHANDleD ISR\n");
+        printf("UNHANDleD ISR\n");
     else {
-        printstr("PANIC");
+        printf("PANIC");
         panic();
     }
 }
