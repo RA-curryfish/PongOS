@@ -4,10 +4,16 @@
 #include "irq.h"
 #include "../drivers/driver_headers.h"
 #include "../phy_mem_mgr.h"
+#include "../libf.h"
 
-void pg_fault()
+extern void panic();
+
+void pg_fault(registers* regs)
 {
-	printstr("PAGE FULT");
+	// printf("%x",*(uint32_t*)regs->eip);
+    // printf("\n%x %x %x\n", regs->eip, regs->esp, regs->ebp);
+    printstr("PAGE FULT");
+    panic();
 	// handle adding page to the page table etc here
 	// uintptr_t* ptr = ph_malloc();
 	// if ((get_bitmap(1)&(1<<1)) == 0) printstr("suc");

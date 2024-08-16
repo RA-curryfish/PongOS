@@ -25,7 +25,7 @@ void load(file_t* f, vas_t* vas)
         vas->code_begin = (uint8_t*)ph_frame_alloc(); // 0x400000
         vas->global_begin = (uint8_t*)ph_frame_alloc(); // 0x401
         vas->heap_begin = (uint8_t*)ph_frame_alloc(); // 0x402
-        vas->stack_begin = (uint8_t*)ph_frame_alloc()+0x400; // 0x404, because stack grows downwards, 0x400 instead of 0x1000 because increments in 4
+        vas->stack_begin = (uint8_t*)ph_frame_alloc()+0x1000; // 0x404, because stack grows downwards
         // pt[0] = (uint32_t)frame0 | 7;
         // pt[1] = (uint32_t)frame1 | 7;
         // pt[2] = (uint32_t)frame2 | 7;
@@ -58,8 +58,17 @@ void load(file_t* f, vas_t* vas)
             buf += buf_len; // ideally change frames after 4KB
         } while(total_bytes_read>0);
         
-        // for(int i=0x400000;i<=(int)buf;i++){
-        //     if(*(unsigned char*)i != 0x00)
+        *(unsigned char*)0x400009 = '\x40';
+        uint32_t ptr = printf;
+        uint32_t disp = ptr - 0x400010;
+        unsigned char* call_inst = (unsigned char*)&disp;
+        *(unsigned char*)0x40000c = call_inst[0];
+        *(unsigned char*)0x40000d = call_inst[1];
+        *(unsigned char*)0x40000e = call_inst[2];
+        *(unsigned char*)0x40000f = call_inst[3];
+
+        // for(int i=0x400000;i<=0x400020;i++){
+        //     // if(*(unsigned char*)i != 0x00)
         //         printf("%x ", *(unsigned char*)i);
         // }
     }
