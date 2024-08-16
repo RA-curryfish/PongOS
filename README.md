@@ -2,7 +2,7 @@
 Building my version of the BareBonesOS, a minimal OS built for the x86 architecture. Making the game 'Pong' on it, and coding in assembly and freestanding C (C without stdlib), and learning concepts in computer architecture, operating systems, linkers/loaders and so on.
 
 ## Milestones
-- Create a binary, store on floppy, and then run it as a task (Launching applications)
+- Create ELF parser or some way to dynamically link unresolved symbols in the binary loaded from device (symb table, etc)
 - Create a file system parser (FAT16?) and read from floppy
 - Basic terminal to type in commands and interact with the OS (fixing small bugs)
 - Improve phy and virtual memory management
@@ -15,8 +15,7 @@ Building my version of the BareBonesOS, a minimal OS built for the x86 architect
 - A terminal pops up, can type in the cmd line but can't use arrow keys
 - Floppy controller set up and skeleton VFS created
 - A simple kernel heap allocator and frame allocator created
-- Can load data from floppy to memory and jump to that location (running a binary??)
-- Can context switch between kernel and another process/task in the same VAS
+- Can load binary from floppy to memory, and run that code as another process (statically linking lib functions for now) in the same VAS
 
 ## Building
 - You need to build a cross compiler for x86 arch. Download GCC and binutils and build them in a safe directory (away from system stuff)
@@ -116,8 +115,9 @@ The code for context switch (CS) needs to be in assembly to prevent the C compil
 |         | 3fe8    | 0      | edi        |
 |         | 3fec    | 207034 | esi        |
 |         | 3ff0    | 207034 | ebx        |
-| ret1    | 3ff4    | 200BB0 | exch_tasks |
-| ret2    | 3ff8    | 207034 | func       |
+| ret1    | 3ff4    | 200BB0 | task_begin |
+| ret2    | 3ff8    | 207034 | task_entry |
+| ret3    | 3ff8    | 207034 | task_end   |
 | param1  | 3ffc    | 2043f0 | task       |
 
-'func' is the entry function of the task, 'exch_tasks' updates the current task to the new task and takes the parameter 'task'. esp is the top of stack when CS occurs. There can be another function after 'task' that is a general wind down function.
+'task_entry' is the entry function of the task, 'task_begin' updates the current task to the new task and takes the parameter 'task'. esp is the top of stack when CS occurs. There can be another function after 'task' that is a general wind down function, 'task_end' which switches back to kernel. Since the code for task_begin/end/entry is written in C, either use __attribute__((naked)) to prevent stack movements and handle them yourself, or be aware of the stack movements due to pro/epilogues
