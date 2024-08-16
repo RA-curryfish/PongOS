@@ -2,6 +2,7 @@
 #include "../asm_helper.h"
 #include "../libf.h"
 #include "keyboard.h"
+#include "../cmds.h"
 
 size_t terminal_row;
 size_t terminal_column;
@@ -14,10 +15,13 @@ const char* error_cmd_label = "unkown command";
 char* cmd_label = "cmd:";
 uint8_t cmd_offset = 0;
 const char* cmd_list[] = {
-	"pong",
+	"help",
+	"clear",
 	"text",
+	"pong",
 	"exit"
 };
+uint8_t cmd_list_size=0;
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
 {
@@ -78,6 +82,7 @@ void terminal_initialize()
 	terminal_row = 0;
 	terminal_column = 0+cmd_offset;
 	cmd_label_color = vga_entry_color(VGA_COLOR_LIGHT_GREEN,VGA_COLOR_BLACK);
+	cmd_list_size = sizeof(cmd_list)/sizeof(cmd_list[0]);
 	error_label_color = vga_entry_color(VGA_COLOR_LIGHT_RED,VGA_COLOR_BLACK);
 	terminal_text_color = vga_entry_color(VGA_COLOR_CYAN,VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) VGA_MEM_BASE;
@@ -106,6 +111,31 @@ void emit_label(const char *label, uint8_t color)
 {
 	size_t len = strlen(label);
 	for(size_t i=0;i<len;i++) terminal_putcharat(label[i],color,i,terminal_row);
+	terminal_column = len;
+}
+
+void execute_cmd(const size_t cmd_num, ...)
+{	
+	switch (cmd_num)
+	{
+		case 0:
+			toggle_cmd_offset();
+			help(cmd_list,cmd_list_size);
+			toggle_cmd_offset();
+			emit_label(cmd_label, cmd_label_color);
+			break;
+		case 1:
+			clear_terminal();
+			emit_label(cmd_label, cmd_label_color);
+			break;
+		case 2:
+			toggle_cmd_offset();
+			clear_terminal();
+			text();
+			break;
+		default:
+			break;
+	}
 }
 
 char* extract_char(ter_el* elem)
@@ -122,32 +152,22 @@ char* extract_char(ter_el* elem)
 int8_t cmd_parser(size_t row)
 {
 	char* usr_cmd = extract_char(terminal_line_ptrs[row]);
-	for(size_t j=0;j<3;j++) // todo: remove hardcoding
+	for(size_t j=0;j<cmd_list_size;j++)
 		if(strcmp_cmd(usr_cmd+cmd_offset,cmd_list[j]) == true) return j;
 	return -2;
-}
-
-void execute_cmd(const size_t cmd_num)
-{
-	terminal_putcharat('$',cmd_label_color,terminal_column,terminal_row);
-	
-	switch (cmd_num)
-	{
-	case 0:
-		break;
-	default:
-		break;
-	}
 }
 
 void terminal_putchar(char c) 
 {
 	switch(c) {
 		case '\n':
-			int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(terminal_row);
+			int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(terminal_row); // just enter a new line if nothing is typed
 			terminal_column = 0+cmd_offset;
-			if  (cmd_offset) {
+			if (cmd_offset) {
 				if (cmd_num >= 0) {
+					if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
+					else terminal_row++;
+					terminal_column=0;
 					execute_cmd(cmd_num);
 				}
 				else {
@@ -169,6 +189,10 @@ void terminal_putchar(char c)
 		case '\t': // todo: complete tab space implementation
 			size_t rem = VGA_WIDTH-terminal_column;
 			terminal_column = rem<8 ? 8-rem : terminal_column+8;
+			break;
+		case -2: // end key
+			execute_cmd(1);
+			toggle_cmd_offset();
 			break;
 		default:
 			terminal_putcharat(c, terminal_text_color, terminal_column, terminal_row);

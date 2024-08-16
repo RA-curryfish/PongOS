@@ -92,7 +92,7 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	
 	kernel_task->next_task = task;
 
-	switch_task(kernel_task, kernel_task->next_task);
+	// switch_task(kernel_task, kernel_task->next_task);
 
 	ph_free((uintptr_t)kernel_task);
 	ph_free((uintptr_t)task);

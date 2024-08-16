@@ -83,7 +83,7 @@ void keyboard_handle()
             else printchar(kbd[c]);
         }
         else if (kbd[c] == -1) backspace();
-        // else if (kbd[c] == -2) // END key. quit?? disable KB int???
+        else if (kbd[c] == -2) printchar(kbd[c]); // END key. quit?? disable KB int???
 	    else if (kbd[c] == -3) capslock = !capslock;
     }
 }
