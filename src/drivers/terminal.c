@@ -14,6 +14,7 @@ ter_el* terminal_line_ptrs[VGA_HEIGHT];
 const char* error_cmd_label = "unkown command";
 char* cmd_label = "cmd:";
 uint8_t cmd_offset = 0;
+uint8_t line_wrap=0;
 const char* cmd_list[] = {
 	"help",
 	"clear",
@@ -58,9 +59,9 @@ void update_cursor(int x, int y)
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
-void toggle_cmd_offset() 
+void toggle_cmd_offset(bool on) 
 {
-	cmd_offset = cmd_offset == 0? strlen(cmd_label) : 0;
+	cmd_offset = on? strlen(cmd_label) : 0;
 }
 
 void clear_line(size_t row)
@@ -119,17 +120,18 @@ void execute_cmd(const size_t cmd_num, ...)
 	switch (cmd_num)
 	{
 		case 0:
-			toggle_cmd_offset();
+			toggle_cmd_offset(false);
 			help(cmd_list,cmd_list_size);
-			toggle_cmd_offset();
+			toggle_cmd_offset(true);
 			emit_label(cmd_label, cmd_label_color);
 			break;
 		case 1:
 			clear_terminal();
+			toggle_cmd_offset(true);
 			emit_label(cmd_label, cmd_label_color);
 			break;
 		case 2:
-			toggle_cmd_offset();
+			toggle_cmd_offset(false);
 			clear_terminal();
 			text();
 			break;
@@ -163,6 +165,7 @@ void terminal_putchar(char c)
 		case '\n':
 			int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(terminal_row); // just enter a new line if nothing is typed
 			terminal_column = 0+cmd_offset;
+			line_wrap=0;
 			if (cmd_offset) {
 				if (cmd_num >= 0) {
 					if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
@@ -192,12 +195,13 @@ void terminal_putchar(char c)
 			break;
 		case -2: // end key
 			execute_cmd(1);
-			toggle_cmd_offset();
+			toggle_cmd_offset(true);
 			break;
 		default:
 			terminal_putcharat(c, terminal_text_color, terminal_column, terminal_row);
 			if (++terminal_column == VGA_WIDTH) {
 				terminal_column = 0;
+				++line_wrap;
 				if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
 				else terminal_row++;
 			}
@@ -219,16 +223,40 @@ void printstr(const char *data)
 
 void backspace()
 {
-	if(terminal_column == cmd_offset) {
-		if(terminal_row == 0); // do nothing
-		else { // todo: fix backspace when command goes to the next line
-			// terminal_column = VGA_WIDTH; 
-			// --terminal_row;
+	if(cmd_offset==0) { // text mode
+		if(terminal_column == 0) {
+			if(terminal_row != 0) {
+				--terminal_row;
+				terminal_column=VGA_WIDTH;
+			}
+		}
+		else {
+			--terminal_column;
 		}
 	}
-	else {
-		--terminal_column;
+	else { // cmd mode
+		if(!line_wrap) {
+			if(terminal_column == cmd_offset) {
+				if(terminal_row == 0); // do nothing
+			}
+			else {
+				--terminal_column;
+			}
+		}
+		else {
+			if(terminal_column == 0) {
+				if(terminal_row != 0) {
+					--terminal_row;
+					--line_wrap;
+					terminal_column=VGA_WIDTH;
+				}
+			}
+			else {
+				--terminal_column;
+			}
+		}
 	}
+	
 	terminal_putcharat(' ',terminal_text_color,terminal_column,terminal_row);
 	update_cursor(terminal_column, terminal_row);
 }
@@ -246,7 +274,7 @@ void splash_screen()
 	while(true) if (inb(KBD_STATUS_PORT)&1) break; // yes, it is funny
 	inb(KBD_DATA_PORT);
 	
-	toggle_cmd_offset();
+	toggle_cmd_offset(true);
 	clear_terminal();
 	emit_label(cmd_label,cmd_label_color);
 	enable_cursor(0,15);
