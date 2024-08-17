@@ -74,27 +74,14 @@ void kernel_main(uintptr_t heap_end, uintptr_t heap_begin, unsigned long* mbt)
 	uintptr_t u_mem_beg = dma_beg+0x300000; // hardcoding for now
 	ph_free((uintptr_t)mem_info);
 	
-	init_hal(dma_beg, u_mem_beg); // pass memory bounds for phy mem
+	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
+	cur_task = kernel_task;
+	init_kernel_task((uint32_t*)&cur_task, kernel_task);
+
+	init_hal(dma_beg, u_mem_beg, (void*)kernel_task); // pass memory bounds for phy mem, kernel task pointer
 	
 	splash_screen();
 
-	pcb* kernel_task = (pcb*)ph_malloc(sizeof(pcb));
-	pcb* task = (pcb*)ph_malloc(sizeof(pcb));
-	cur_task = kernel_task;
-	init_kernel_task((uint32_t*)&cur_task, kernel_task);
-	
-	file_t* f = (file_t*)ph_malloc(sizeof(file_t));
-	f->type = DEVICE;
-	vas_t* vas = (vas_t*)ph_malloc(sizeof(vas_t)); 
-	load(f,vas);
-	ph_free((uintptr_t)f);
-	create_task(task,kernel_task,0, (void (*)())vas->code_begin, vas->stack_begin);
-	
-	kernel_task->next_task = task;
-
-	// switch_task(kernel_task, kernel_task->next_task);
-
-	ph_free((uintptr_t)kernel_task);
-	ph_free((uintptr_t)task);
+	// ph_free((uintptr_t)kernel_task);
 	kernel_bsy_loop();
 }

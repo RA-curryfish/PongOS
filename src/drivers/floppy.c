@@ -158,7 +158,6 @@ void fpc_irq()
 void fpc_irq_wait()
 {
     while(!floppy_irq_done);
-    // floppy_irq_done=false;
 }
 
 void floppy_fetch_res(uint8_t* st0, uint8_t* cyl)
@@ -239,8 +238,7 @@ int fpc_read(unsigned char* buf, size_t lba, size_t len)
     fpc_motor_on(true);
     floppy_dma_init(0, len);
     // wait until motor is vroom vvroom
-    for(uint8_t i=0;i<250;i++) iowait();
-
+    for(uint16_t i=0;i<1000;i++) iowait();
     // issue std r/w data cmd
     floppy_irq_done=false;
     fpc_send_cmd(CMD_READ_DATA|MT|MFM, DATA_FIFO);
@@ -252,7 +250,7 @@ int fpc_read(unsigned char* buf, size_t lba, size_t len)
     fpc_send_cmd(SECTORS_PER_TRACK, DATA_FIFO); // end of tracks
     fpc_send_cmd(0x1B, DATA_FIFO); //GAP size
     fpc_send_cmd(0xFF, DATA_FIFO);
-    fpc_irq_wait();
+    // fpc_irq_wait();
     floppy_irq_done=false;
     
     // status, ending chs, bytes per sec vals

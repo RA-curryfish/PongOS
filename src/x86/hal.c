@@ -21,7 +21,6 @@ void pg_fault(registers* regs)
 	// printchar(*(char*)ptr);
 	
 	// ph_free(ptr);
-
 }
 
 void register_interrupts()
@@ -32,7 +31,7 @@ void register_interrupts()
 	isr_register_handler(0x0E,pg_fault);
 }
 
-void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg)
+void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg, void* kernel_task)
 {
     // Loads the IDT into register using idt desciptor val
     // idt_descriptor -> struct {sizeof(256*idt_entries), ptr to idt[256]}
@@ -47,7 +46,7 @@ void init_hal(uintptr_t dma_beg, uintptr_t u_mem_beg)
     // Initialize physical memory
     ph_mem_initialize(dma_beg,u_mem_beg);
     // Initialize terminal
-	terminal_initialize();
+	terminal_initialize(kernel_task);
     // init floppy driver
     fpc_init((unsigned char*)dma_beg);
 }

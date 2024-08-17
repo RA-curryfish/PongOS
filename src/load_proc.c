@@ -57,7 +57,6 @@ void load(file_t* f, vas_t* vas)
             total_bytes_read -= bytes_read;
             buf += buf_len; // ideally change frames after 4KB
         } while(total_bytes_read>0);
-        
         *(unsigned char*)0x400009 = '\x40';
         uint32_t ptr = printf;
         uint32_t disp = ptr - 0x400010;

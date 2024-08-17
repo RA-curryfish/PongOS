@@ -78,7 +78,7 @@ void clear_terminal()
 	update_cursor(terminal_column,terminal_row);
 }
 
-void terminal_initialize() 
+void terminal_initialize(void* kernel_task) 
 {
 	terminal_row = 0;
 	terminal_column = 0+cmd_offset;
@@ -88,6 +88,7 @@ void terminal_initialize()
 	terminal_text_color = vga_entry_color(VGA_COLOR_CYAN,VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t*) VGA_MEM_BASE;
 	for (size_t y = 0; y < VGA_HEIGHT; y++) terminal_line_ptrs[y] = (ter_el*)(sizeof(uint16_t)*y*VGA_WIDTH+VGA_MEM_BASE);
+	cmd_initialize(kernel_task);
 }
 
 void scroll_terminal()
@@ -134,6 +135,11 @@ void execute_cmd(const size_t cmd_num, ...)
 			toggle_cmd_offset(false);
 			clear_terminal();
 			text();
+			break;
+		case 3:
+			toggle_cmd_offset(false);
+			clear_terminal();
+			pong();
 			break;
 		default:
 			break;
@@ -236,10 +242,10 @@ void backspace()
 	}
 	else { // cmd mode
 		if(!line_wrap) {
-			if(terminal_column == cmd_offset) {
-				if(terminal_row == 0); // do nothing
-			}
-			else {
+			// if(terminal_column == cmd_offset) {
+			// 	if(terminal_row == 0); // do nothing
+			// }
+			if(terminal_column > cmd_offset) {
 				--terminal_column;
 			}
 		}
@@ -247,7 +253,7 @@ void backspace()
 			if(terminal_column == 0) {
 				if(terminal_row != 0) {
 					--terminal_row;
-					--line_wrap;
+					line_wrap = line_wrap>0? line_wrap-1 : 0;
 					terminal_column=VGA_WIDTH;
 				}
 			}
