@@ -159,6 +159,7 @@ char* extract_char(ter_el* elem)
 
 int8_t cmd_parser(size_t row)
 {
+	// add code to check multiline cmd like "echo .....<nextline>..."
 	char* usr_cmd = extract_char(terminal_line_ptrs[row]);
 	for(size_t j=0;j<cmd_list_size;j++)
 		if(strcmp_cmd(usr_cmd+cmd_offset,cmd_list[j]) == true) return j;

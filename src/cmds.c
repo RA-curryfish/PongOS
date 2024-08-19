@@ -10,8 +10,7 @@ pcb* KERNEL_TASK;
 
 void help(const char* cmd_list[], uint8_t sz)
 {
-    printf("The list of commands are:\n");
-    // printf("%d", sz);
+    printf("Command List\n");
     for(uint8_t i=0;i<sz;i++) {
         printf("%s\n", cmd_list[i]);
     }
@@ -38,6 +37,7 @@ void pong()
 	
     ph_free((uintptr_t)f);
 	ph_free((uintptr_t)task);
+    printf("outside??");
 }
 
 void cmd_initialize(void* kernel_task)

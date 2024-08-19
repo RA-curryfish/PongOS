@@ -7,14 +7,14 @@ uint32_t* CUR_TASK_ADDR;
 
 void task_end()
 {
-    printf("TASK END\n");
-    while(1);
+    printf("\nTASK END\n");
+    switch_task((pcb*)(*CUR_TASK_ADDR), ((pcb*)(*CUR_TASK_ADDR))->next_task);
 }
 
-void task_begin(uint32_t* task)
+void task_begin()
 {
     printf("TASK BEGIN\n");
-    *CUR_TASK_ADDR = task;   
+    __asm__ __volatile__ ("mov 12(%%ebp), %0" : "=r" (*CUR_TASK_ADDR));
 }
 
 void init_kernel_task(uint32_t* cur_task_addr, pcb* k_task)
@@ -30,10 +30,10 @@ void setup_kstack(pcb* task, void(*task_entry)(), uint8_t* stack_begin)
 {
     uint32_t* stack_top = (uint32_t*)stack_begin;
 
-    stack_top -= 1; *stack_top = (uint32_t)task; // param1 to task_begin
-    stack_top -= 1; *stack_top = (uint32_t)task_end; // return address to task_end
-    stack_top -= 1; *stack_top = (uint32_t)task_entry; // return address to task
-    stack_top -= 1; *stack_top = (uint32_t)task_begin; // return address to exch tasks
+    stack_top -= 1; *stack_top = (uint32_t*)task; // param1 to task_begin
+    stack_top -= 1; *stack_top = (uint32_t*)task_end; // return address to task_end
+    stack_top -= 1; *stack_top = (uint32_t*)task_entry; // return address to task
+    stack_top -= 1; *stack_top = (uint32_t*)task_begin; // return address to exch tasks
     stack_top -= 1; __asm__ __volatile__ ("mov %%ebx, %0" : "=r" (*stack_top)); // ebx
     stack_top -= 1; __asm__ __volatile__ ("mov %%esi, %0" : "=r" (*stack_top)); // esi
     stack_top -= 1; __asm__ __volatile__ ("mov %%edi, %0" : "=r" (*stack_top)); // edi
