@@ -39,9 +39,10 @@ bool strcmp_cmd(const char *user_cmd, const char *cmd)
 		for(size_t i=0;i<len2;i++) {
 			if(user_cmd[i] != cmd[i]) return false;
 		}
-		for(size_t i=len2;i<len1;i++) {
-			if(user_cmd[i] != ' ' || user_cmd[i] != '\n') return false;
-		}
+		if(user_cmd[len2] != ' ' && user_cmd[len2] != '\n') return false; // user cmd must end or have param after space
+		// for(size_t i=len2;i<len1;i++) {
+		// 	if(user_cmd[i] != ' ' || user_cmd[i] != '\n') return false;
+		// }
 		return true;
 	}
 	return false; // unreachable

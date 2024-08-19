@@ -1,11 +1,9 @@
 #include <stdbool.h>
 #include "x86/hal.h"
 #include "boot/multiboot.h"
-#include "drivers/vfs.h"
 #include "drivers/terminal.h"
 #include "libf.h"
 #include "phy_mem_mgr.h"
-#include "load_proc.h"
 #include "task.h"
 
 #ifdef __linux__

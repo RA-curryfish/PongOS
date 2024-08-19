@@ -20,6 +20,7 @@ const char* cmd_list[] = {
 	"clear",
 	"text",
 	"pong",
+	"echo",
 	"exit"
 };
 uint8_t cmd_list_size=0;
@@ -116,7 +117,7 @@ void emit_label(const char *label, uint8_t color)
 	terminal_column = len;
 }
 
-void execute_cmd(const size_t cmd_num, ...)
+void execute_cmd(const size_t cmd_num, char* args)
 {	
 	switch (cmd_num)
 	{
@@ -141,6 +142,15 @@ void execute_cmd(const size_t cmd_num, ...)
 			clear_terminal();
 			pong();
 			break;
+		case 4:
+			toggle_cmd_offset(false);
+			while(*args != '\0' && *args != '\n') {
+				printf("%c", *args);
+				args++;
+			}
+			printf("\n");
+			toggle_cmd_offset(true);
+			emit_label(cmd_label,cmd_label_color);
 		default:
 			break;
 	}
@@ -150,19 +160,18 @@ char* extract_char(ter_el* elem)
 {
 	char* ret = '\0'; size_t i;
 	for(i=0;i<VGA_WIDTH;i++) {
-		if((elem+i)->c == ' ' || (elem+i)->c == '\0' || (elem+i)->c == '\n') break;
+		if((elem+i)->c == '\0' || (elem+i)->c == '\n') break;
 		ret[i] = (elem+i)->c;
 	}
 	ret[i==VGA_WIDTH? VGA_WIDTH-1 : i] = '\0'; 
 	return ret;
 }
 
-int8_t cmd_parser(size_t row)
+int8_t cmd_parser(char* usr_cmd)
 {
 	// add code to check multiline cmd like "echo .....<nextline>..."
-	char* usr_cmd = extract_char(terminal_line_ptrs[row]);
 	for(size_t j=0;j<cmd_list_size;j++)
-		if(strcmp_cmd(usr_cmd+cmd_offset,cmd_list[j]) == true) return j;
+		if(strcmp_cmd(usr_cmd,cmd_list[j]) == true) return j;
 	return -2;
 }
 
@@ -170,17 +179,22 @@ void terminal_putchar(char c)
 {
 	switch(c) {
 		case '\n':
-			int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(terminal_row); // just enter a new line if nothing is typed
-			terminal_column = 0+cmd_offset;
-			line_wrap=0;
-			if (cmd_offset) {
+			if(cmd_offset) {
+				char* usr_cmd = extract_char(terminal_line_ptrs[terminal_row]);
+				usr_cmd += cmd_offset;
+				int8_t cmd_num = terminal_column==cmd_offset? -1 : cmd_parser(usr_cmd); // just enter a new line if nothing is typed
+				line_wrap=0;
 				if (cmd_num >= 0) {
 					if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
 					else terminal_row++;
 					terminal_column=0;
-					execute_cmd(cmd_num);
+					usr_cmd = usr_cmd + strlen(cmd_list[cmd_num]);
+					if(usr_cmd[0] == ' ') usr_cmd++;
+					execute_cmd(cmd_num, usr_cmd);
 				}
 				else {
+					terminal_column = cmd_offset;
+
 					if (cmd_num < -1) {
 						if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
 						else terminal_row++;
@@ -194,6 +208,7 @@ void terminal_putchar(char c)
 			else {
 				if (terminal_row == (VGA_HEIGHT-1)) scroll_terminal();
 				else terminal_row++;
+				terminal_column = 0;
 			}
 			break;
 		case '\t': // todo: complete tab space implementation
@@ -201,7 +216,7 @@ void terminal_putchar(char c)
 			terminal_column = rem<8 ? 8-rem : terminal_column+8;
 			break;
 		case -2: // end key
-			execute_cmd(1);
+			execute_cmd(1,"\0");
 			toggle_cmd_offset(true);
 			break;
 		default:
@@ -273,6 +288,7 @@ void splash_screen()
 	/* Initialize terminal interface */
 	disable_cursor();
 	clear_terminal();
+	toggle_cmd_offset(false);
 	printstr("\n\n\n\n\n\n\n\n\n\n");
 	printstr("\t\t*****************************************\n");
 	printstr("\t\t*\t\tPong OS\t\t*\n");
